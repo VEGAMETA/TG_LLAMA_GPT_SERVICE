@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline.models import get_model_keyboard
 from src.keyboards.inline.languages import get_language_keyboard
-
+from src.utils.gpt_status import gpt_requests, GPTRequestStatus
 from loader import dp
 
 
@@ -15,10 +15,26 @@ async def command_start_handler(message: Message) -> None:
     user_id = message.from_user.id
     user_name = message.from_user.full_name
     await message.answer(f"""Hello, {hbold(user_name)}
-    I am gpt bot based on open-source models!
-    Feel free to ask any question.
-    type {hbold('/help')} for info
+I am gpt bot based on open-source models!
+Feel free to ask any question.
+type {hbold('/help')} for info
     """)
+
+
+@dp.message(Command("help"))
+async def help_handler(message: Message) -> None:
+    commands = """
+    /help
+    /stop
+    /set_language
+    /set_model
+    """
+    await message.answer(f"list of commands {commands}")
+
+
+@dp.message(Command("stop"))
+async def stop_handler(message: Message) -> None:
+    gpt_requests[message.from_user.id] = GPTRequestStatus.StopRequest
 
 
 @dp.message(Command("set_model"))
@@ -26,9 +42,9 @@ async def set_model_handler(message: Message) -> None:
     """
     This is a `/set_model` command handler that sends models list and allows to set a model.
     """
-    
+
     await message.answer("Please select a model:", reply_markup=get_model_keyboard())
-    
+
 
 @dp.message(Command("set_language"))
 async def set_language_handler(message: Message) -> None:
