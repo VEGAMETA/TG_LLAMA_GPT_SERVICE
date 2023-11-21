@@ -3,7 +3,8 @@ from aiogram.filters import CommandStart, Command
 from aiogram.utils.markdown import hbold
 from src.keyboards.inline.models import get_model_keyboard
 from src.keyboards.inline.languages import get_language_keyboard
-from src.utils.gpt_status import gpt_requests, GPTRequestStatus
+from src.gpt.status import RequestStatus
+from src.models.user import create_user, users
 from loader import dp
 
 
@@ -13,6 +14,11 @@ async def command_start_handler(message: Message) -> None:
     This is a `/start` command handler that sends a greeting message.
     """
     user_id = message.from_user.id
+    if user_id in users.keys():
+        users[user_id].request_status = RequestStatus.NONE
+        await message.answer(f"Hello again!\nType /help for info")
+        return
+    create_user(user_id)
     user_name = message.from_user.full_name
     await message.answer(f"""Hello, {hbold(user_name)}
 I am gpt bot based on open-source models!
@@ -26,6 +32,7 @@ async def help_handler(message: Message) -> None:
     commands = """
     /help
     /stop
+    /clear
     /set_language
     /set_model
     """
@@ -34,7 +41,12 @@ async def help_handler(message: Message) -> None:
 
 @dp.message(Command("stop"))
 async def stop_handler(message: Message) -> None:
-    gpt_requests[message.from_user.id] = GPTRequestStatus.StopRequest
+    users.get(message.from_user.id).request_status = RequestStatus.STOP_REQUEST
+
+
+@dp.message(Command("clear"))
+async def clear_handler(message: Message) -> None:
+    users.get(message.from_user.id).context.clear()
 
 
 @dp.message(Command("set_model"))
