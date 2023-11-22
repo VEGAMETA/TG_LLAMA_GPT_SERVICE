@@ -89,16 +89,16 @@ async def gpt_handler(message: aiogram.types.Message) -> None:
                         network_error = True
                         await asyncio.sleep(3)
 
-                    except aiohttp.client_exceptions.ServerDisconnectedError as e:
-                        logging.error(e)
-                        return
-
                     except aiohttp.client_exceptions.ClientConnectorError as e:
                         logging.error(e)
-                        await bot_message.edit_text(answer + "...\n\n(Technical issues)\nCannot connect to servers")
+                        await bot_message.edit_text(answer + "...\n\n(Technical issues)\nClient Connector Error")
 
     except asyncio.exceptions.TimeoutError as _:
         await bot_message.edit_text(answer + "...\n\nTimeout Error (>5min)")
+
+    except aiohttp.client_exceptions.ServerDisconnectedError as e:
+        logging.error(e)
+        await bot_message.edit_text(answer + "...\n\n(Technical issues)\nServer disconnected")
 
     finally:
         users.get(user_id).request_status = RequestStatus.NONE
