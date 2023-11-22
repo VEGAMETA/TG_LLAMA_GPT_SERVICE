@@ -43,7 +43,7 @@ async def gpt_handler(message: aiogram.types.Message) -> None:
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post('http://127.0.0.1:11434/api/generate', json=data) as response:
+            async with session.post('http://localhost:11434/api/generate', json=data) as response:
                 async for chunk in response.content.iter_chunks():
                     try:
                         # User's stop request handler
