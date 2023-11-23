@@ -11,7 +11,7 @@ from loader import dp
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     """
-    This is a `/start` command handler that sends a greeting message.
+    CommandStart handler that sends a greeting message.
     """
     user_id = message.from_user.id
     if user_id in users.keys():
@@ -29,6 +29,9 @@ type {hbold('/help')} for info
 
 @dp.message(Command("help"))
 async def help_handler(message: Message) -> None:
+    """
+    Help command handler sends list of commands
+    """
     commands = """
     /help
     /stop
@@ -41,26 +44,32 @@ async def help_handler(message: Message) -> None:
 
 @dp.message(Command("stop"))
 async def stop_handler(message: Message) -> None:
+    """
+    Request for gpt to stop answering
+    """
     users.get(message.from_user.id).request_status = RequestStatus.STOP_REQUEST
 
 
 @dp.message(Command("clear"))
 async def clear_handler(message: Message) -> None:
+    """
+    Clears the context for user gpt request
+    """
     users.get(message.from_user.id).context.clear()
+    await message.answer("Context cleared.")
 
 
 @dp.message(Command("set_model"))
 async def set_model_handler(message: Message) -> None:
     """
-    This is a `/set_model` command handler that sends models list and allows to set a model.
+    This handler sends models list and allows to set a model.
     """
-
     await message.answer("Please select a model:", reply_markup=get_model_keyboard())
 
 
 @dp.message(Command("set_language"))
 async def set_language_handler(message: Message) -> None:
     """
-    This is a `/set_language` command handler that allows to change the language.
+    This handler allows to change the language.
     """
     await message.answer("Please select a language:", reply_markup=get_language_keyboard())
