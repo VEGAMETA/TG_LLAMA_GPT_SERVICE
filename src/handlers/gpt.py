@@ -6,9 +6,9 @@ import aiohttp
 import aiogram
 import aiogram.exceptions
 import aiohttp.client_exceptions
+from src.models.gpt import RequestStatus
+from src.models.user import User, users
 from loader import dp
-from src.gpt.status import RequestStatus
-from src.models.user import create_user, users
 
 
 @dp.message(aiogram.F.text)
@@ -16,25 +16,18 @@ async def gpt_handler(message: aiogram.types.Message) -> None:
     """
     This handler manage ollama gpt api calls with streaming and editing message for it.
     """
-    user_id = message.from_user.id
+    user_id: int = message.from_user.id
+    user = users.get(user_id) if user_id in users.keys() else User.create_user(user_id)
 
-    if user_id not in users.keys():
-        create_user(user_id)
-
-    if users.get(user_id).request_status == RequestStatus.PROCESSING:
+    if user.request_status == RequestStatus.PROCESSING:
         await message.answer('Previous request is processing\nCall /stop to stop answering')
         return
 
-    users.get(user_id).request_status = RequestStatus.PROCESSING
-
+    user.request_status = RequestStatus.PROCESSING
     bot_message = await message.answer('•••')
-
     network_error = False
-
     bot_message_time = time.monotonic()
-
     answer = ''
-
     data = {
         "prompt": message.text,
         "model": users.get(user_id).model.value,
@@ -46,6 +39,10 @@ async def gpt_handler(message: aiogram.types.Message) -> None:
             async with session.post('http://localhost:11434/api/generate', json=data) as response:
                 async for chunk in response.content.iter_chunks():
                     try:
+                        if not isinstance(chunk, tuple):
+                            await bot_message.edit_text(answer + "...\n\n(Technical issues)\nAnswer is empty")
+                            return
+
                         # User's stop request handler
                         if users.get(user_id).request_status == RequestStatus.STOP_REQUEST:
                             await bot_message.edit_text(answer + "...\n\nRequest stopped by user")

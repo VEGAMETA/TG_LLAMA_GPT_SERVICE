@@ -1,6 +1,12 @@
 import enum
 
 
+class RequestStatus(enum.Enum):
+    NONE = 0
+    PROCESSING = 1
+    STOP_REQUEST = 2
+
+
 class Models(enum.Enum):
     MISTRAL = "mistral"
     LLAMA2_UNCENSORED_7B = "llama2-uncensored:7b"
