@@ -6,16 +6,23 @@ import aiohttp
 import aiogram
 import aiogram.exceptions
 import aiohttp.client_exceptions
+from aiogram.fsm.context import FSMContext
+
 from src.models.gpt import RequestStatus
 from src.models.user import User, users
 from loader import dp
+from src.states.user import UserState
 
 
 @dp.message(aiogram.F.text)
-async def gpt_handler(message: aiogram.types.Message) -> None:
+async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None:
     """
     This handler manage ollama gpt api calls with streaming and editing message for it.
     """
+    current_state = await state.get_state()
+    if current_state != UserState.chatting:
+        return
+
     user_id: int = message.from_user.id
     user = users.get(user_id) if user_id in users.keys() else User.create_user(user_id)
 

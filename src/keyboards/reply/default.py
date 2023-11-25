@@ -1,18 +1,22 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+
+from src.filters.default import DefaultCallback
 from src.models.language import Languages
 
 
-def get_default_keyboard(language: Languages = Languages.EN):
+def get_default_keyboard(language: Languages = Languages.EN) -> ReplyKeyboardMarkup:
     user_language_dictionary = language.value.dictionary
-    commands = {
-        user_language_dictionary.get("command_help"): "default:help",
-        user_language_dictionary.get("command_stop"): "default:stop",
-        user_language_dictionary.get("command_clear"): "default:clear",
-        user_language_dictionary.get("command_set_language"): "default:set_language",
-        user_language_dictionary.get("command_set_model"): "default:set_model",
-    }
-    keyboard = ReplyKeyboardMarkup(keyboard=[], row_width=1)
+    commands = {v: "default:" + k.rstrip("command_") for k, v in user_language_dictionary.items() if
+                k.startswith("command_")}
+    builder = ReplyKeyboardBuilder()
     for text, command in commands.items():
-        button = KeyboardButton(text=text, callback_data=command)
-        keyboard.keyboard.append([button])
-    return keyboard
+        builder.button(text=text, callback_data=command).adjust(1, True)
+    return builder.as_markup()
+
+
+def set_cancel_button(builder: ReplyKeyboardBuilder, language: Languages):
+    builder.button(
+        text=language.value.dictionary.get("cancel"),
+        callback_data=DefaultCallback(command="cancel").pack()
+    ).adjust(1, True)

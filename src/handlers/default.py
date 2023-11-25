@@ -1,23 +1,26 @@
 from aiogram import F
-from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
 from aiogram.utils.markdown import hbold
 
-from src.filters.default import DefaultCallback
 from src.keyboards.reply.gpt import get_model_keyboard
 from src.keyboards.reply.language import get_language_keyboard
 from src.keyboards.reply.default import get_default_keyboard
 from src.models.gpt import RequestStatus
+from src.models.language import Languages
 from src.models.user import User, users
+from src.states.user import UserState
 
 from loader import dp
 
 
 @dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
+async def command_start_handler(message: Message, state: FSMContext) -> None:
     """
     CommandStart handler that sends a greeting message.
     """
+    await state.set_state(UserState.chatting)
     user_id = message.from_user.id
     if user_id in users.keys():
         user = users[user_id]
@@ -34,10 +37,23 @@ async def command_start_handler(message: Message) -> None:
     )
 
 
-@dp.callback_query(DefaultCallback.filter(F.command == "cancel"))
-async def show_keyboard(query: CallbackQuery, callback_data: DefaultCallback):
-    print('opa')
-    await query.answer("Canceled", reply_markup=get_default_keyboard())
+languages = [language.value.dictionary.get("cancel").casefold() for language in Languages if
+             language.value.dictionary.get("cancel")]
+print(languages)
+
+
+@dp.message(Command("cancel"))
+@dp.message(F.text.casefold().in_(languages))
+async def cancel_handler(message: Message, state: FSMContext) -> None:
+    """
+    Allows user to cancel any action
+    """
+    current_state = await state.get_state()
+    if current_state == UserState.chatting:
+        return
+
+    await state.set_state(UserState.chatting)
+    await message.answer("Cancelled.", reply_markup=get_default_keyboard())
 
 
 @dp.message(Command("help"))
@@ -76,18 +92,20 @@ async def clear_handler(message: Message) -> None:
 
 
 @dp.message(Command("set_model"))
-async def set_model_handler(message: Message) -> None:
+async def set_model_handler(message: Message, state: FSMContext) -> None:
     """
     This handler sends models list and allows to set a model.
     """
+    await state.set_state(UserState.choosing_model)
     user = users.get(message.from_user.id)
     await message.answer(user.language.dictionary.get('set_model'), reply_markup=get_model_keyboard())
 
 
 @dp.message(Command("set_language"))
-async def set_language_handler(message: Message) -> None:
+async def set_language_handler(message: Message, state: FSMContext) -> None:
     """
     This handler allows to change the language.
     """
+    await state.set_state(UserState.choosing_language)
     user = users.get(message.from_user.id)
     await message.answer(user.language.dictionary.get('set_language'), reply_markup=get_language_keyboard())

@@ -1,5 +1,5 @@
 import enum
-from src.models.gpt import Models,RequestStatus
+from src.models.gpt import Models, RequestStatus
 from src.models.language import Languages, Language
 
 
@@ -28,6 +28,9 @@ class User:
         self.permission = permission
         self.request_status = request_status
         self.server_id = server_id
+
+    def set_language(self, language: Languages) -> None:
+        self.language = language
 
     @classmethod
     def create_user(cls, user_id) -> 'User':
