@@ -60,28 +60,3 @@ class Languages(enum.Enum):
             "cancel": "Отмена"
         }
     )
-    ISV: Language = Language(
-        name="Medžuslovjansky\nМеджусловјанскы",
-        flag="-",
-        dictionary={
-            "greeting": "",
-            "start": "\nI am gpt bot based on open-source models!"
-                     "\nFeel free to ask any question."
-                     f"\ntype {hbold('/help')} for info",
-            "restart": f"Hello again!\nType {hbold('/help')} for info",
-            "help": "List of commands",
-            "clear": "Context cleared.",
-
-            "set_model": "Please select a model",
-            "set_model_after": "Model has beem chosen: ",
-
-            "set_language": "Please select a language",
-            "set_language_after": "English",
-            "command_help": "Help",
-            "command_stop": "Stop",
-            "command_clear": "Clear context",
-            "command_set_language": "Set language",
-            "command_set_model": "Set model",
-            "cancel": "Cancel",
-        }
-    )
