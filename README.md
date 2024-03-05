@@ -18,6 +18,11 @@ Run service
 docker-compose up
 ```
 
+#### Do not forget to pull needed [model(s)](https://ollama.com/library) at ollama container
+```bash
+ollama pull llama2
+```
+
 Stop service
 ```bash
 docker-compose down
