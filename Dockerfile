@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 FROM python:3.10-alpine
 
-WORKDIR /bot
+WORKDIR /www
 
 COPY requirements.txt .
 

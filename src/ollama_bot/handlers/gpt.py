@@ -8,9 +8,9 @@ import aiogram.exceptions
 import aiohttp.client_exceptions
 from aiogram.fsm.context import FSMContext
 
+from loader import dp
 from ollama_bot.misc.gpt import RequestStatus
 from ollama_bot.models.user import User, users
-from loader import dp
 from ollama_bot.states.user import UserState
 
 
@@ -107,4 +107,4 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
         await bot_message.edit_text(answer + "...\n\n(Technical issues)\nServer disconnected")
 
     finally:
-        users.get(user_id).request_status = RequestStatus.NONE
+        users.get(user_id).request_status = RequestStatus.IDLE

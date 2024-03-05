@@ -11,8 +11,7 @@ services:
       DB_USER: "postgres"
       DB_NAME: "telegram"
     networks:
-      - tg_bot_network
-      
+      - tg_bot_network      
 
   ollama:
     volumes:
