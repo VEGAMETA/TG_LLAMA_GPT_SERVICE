@@ -3,8 +3,6 @@ services:
   python:
     container_name: python
     build: .
-    volumes:
-      - tg-bot:/bot
     environment:
       BOT_TOKEN:
       DB_HOST: "host.docker.internal"
@@ -96,7 +94,6 @@ services:
 
 volumes:
   tg-db:
-  tg-bot:
   llm-service:
 
 networks:

@@ -8,7 +8,7 @@ class RequestStatus(enum.Enum):
 
 
 class Models(enum.Enum):
-    MIXTRAL = "dolphin-mixtral"
+    MIXTRAL = "dolphin-mixtral:v2.7"
     LLAMA2 = "llama2-uncensored:70b"
     LLAMA2_TEST = "llama2"
-    CODE_LLAMA = "codellama:34b"
+    CODE_LLAMA = "codellama:70b-code"
