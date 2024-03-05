@@ -44,7 +44,7 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post('http://192.168.1.100:11434/api/generate', json=data) as response:
+            async with session.post('http://host.docker.internal:11434/api/generate', json=data) as response:
                 async for chunk in response.content.iter_chunks():
                     try:
                         if not isinstance(chunk, tuple):
