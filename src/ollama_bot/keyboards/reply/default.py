@@ -1,8 +1,8 @@
 from aiogram.types import ReplyKeyboardMarkup
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-from src.filters.default import DefaultCallback
-from src.models.language import Languages
+from ollama_bot.filters.default import DefaultCallback
+from ollama_bot.models.language import Languages
 
 
 def get_default_keyboard(language: Languages = Languages.EN) -> ReplyKeyboardMarkup:

@@ -1,4 +1,4 @@
-from src.models.gpt import Models
+from ollama_bot.misc.gpt import Models
 
 
 class Container:

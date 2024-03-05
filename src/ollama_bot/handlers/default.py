@@ -4,13 +4,13 @@ from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
 from aiogram.utils.markdown import hbold
 
-from src.keyboards.reply.gpt import get_model_keyboard
-from src.keyboards.reply.language import get_language_keyboard
-from src.keyboards.reply.default import get_default_keyboard
-from src.models.gpt import RequestStatus
-from src.models.language import Languages
-from src.models.user import User, users
-from src.states.user import UserState
+from ollama_bot.keyboards.reply.gpt import get_model_keyboard
+from ollama_bot.keyboards.reply.language import get_language_keyboard
+from ollama_bot.keyboards.reply.default import get_default_keyboard
+from ollama_bot.misc.gpt import RequestStatus
+from ollama_bot.models.language import Languages
+from ollama_bot.models.user import User, users
+from ollama_bot.states.user import UserState
 
 from loader import dp
 

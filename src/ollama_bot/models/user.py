@@ -1,25 +1,17 @@
-import enum
-from src.models.gpt import Models, RequestStatus
-from src.models.language import Languages, Language
+from ollama_bot.misc.user import UserPermission
+from ollama_bot.misc.gpt import Models, RequestStatus
+from ollama_bot.models.language import Languages, Language
 
 
-class UserPermission(enum.Enum):
-    NONE = 0
-    REGULAR = 1
-    ADVANCED = 2
-    PRO = 3
-    ADMIN = 5
-
-
-# TODO: Rewrite whole models when hardware will be able (Postgres on docker(k8s))
+# TODO: Rewrite whole models when hardware will be able Postgres on docker
 class User:
     def __init__(self,
                  user_id: int,
                  context: list[int] = [],
-                 model: Models = Models.MISTRAL,
+                 model: Models = Models.LLAMA2_TEST,
                  language: Language = Languages.EN.value,
-                 permission: UserPermission = UserPermission.NONE,
-                 request_status: RequestStatus = RequestStatus.NONE,
+                 permission: UserPermission = UserPermission.REGULAR,
+                 request_status: RequestStatus = RequestStatus.IDLE,
                  server_id: int = 0) -> None:
         self.user_id = user_id
         self.context = context
@@ -39,4 +31,5 @@ class User:
         return user
 
 
+# Dummy
 users: dict[int, User] = {}

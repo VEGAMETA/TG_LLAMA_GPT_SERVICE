@@ -8,10 +8,10 @@ import aiogram.exceptions
 import aiohttp.client_exceptions
 from aiogram.fsm.context import FSMContext
 
-from src.models.gpt import RequestStatus
-from src.models.user import User, users
+from ollama_bot.misc.gpt import RequestStatus
+from ollama_bot.models.user import User, users
 from loader import dp
-from src.states.user import UserState
+from ollama_bot.states.user import UserState
 
 
 @dp.message(aiogram.F.text)
@@ -24,7 +24,8 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
         return
 
     user_id: int = message.from_user.id
-    user = users.get(user_id) if user_id in users.keys() else User.create_user(user_id)
+    user = users.get(user_id) if user_id in users.keys(
+    ) else User.create_user(user_id)
 
     if user.request_status == RequestStatus.PROCESSING:
         await message.answer('Previous request is processing\nCall /stop to stop answering')
@@ -43,7 +44,7 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post('http://localhost:11434/api/generate', json=data) as response:
+            async with session.post('http://192.168.1.100:11434/api/generate', json=data) as response:
                 async for chunk in response.content.iter_chunks():
                     try:
                         if not isinstance(chunk, tuple):
@@ -61,7 +62,8 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
                         # End of response, writing context
                         if resp_json.get('done'):
                             await bot_message.edit_text(answer)
-                            users.get(user_id).context = resp_json.get("context")
+                            users.get(user_id).context = resp_json.get(
+                                "context")
                             return
 
                         # Delay editing to avoid api requests excesses

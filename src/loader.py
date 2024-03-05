@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from src.config import load_config
+from ollama_bot.config import load_config
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 storage = MemoryStorage()
