@@ -4,6 +4,9 @@ Telegram bot based on ollama service integration.
 
 This project is using Aiogram, Postgres and Ollama
 
+---
+
+#### Set up your BOT_TOKEN environment variable (you can get it from @BotFather)
 
 ---
 

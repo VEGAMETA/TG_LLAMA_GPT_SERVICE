@@ -1,6 +1,6 @@
 import asyncio
 from loader import bot, dp
-from ollama_bot.handlers import default, gpt
+from ollama_bot.handlers import default, language, models, gpt
 
 
 async def main() -> None:

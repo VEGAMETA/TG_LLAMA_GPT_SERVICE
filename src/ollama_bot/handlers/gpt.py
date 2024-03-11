@@ -24,8 +24,7 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
         return
 
     user_id: int = message.from_user.id
-    user = users.get(user_id) if user_id in users.keys(
-    ) else User.create_user(user_id)
+    user = users.get(user_id) if user_id in users.keys() else User.create_user(user_id)
 
     if user.request_status == RequestStatus.PROCESSING:
         await message.answer('Previous request is processing\nCall /stop to stop answering')

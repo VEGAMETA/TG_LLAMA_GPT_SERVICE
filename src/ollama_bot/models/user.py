@@ -9,7 +9,7 @@ class User:
                  user_id: int,
                  context: list[int] = [],
                  model: Models = Models.LLAMA2_TEST,
-                 language: Language = Languages.EN.value,
+                 language: Language = Languages.EN,
                  permission: UserPermission = UserPermission.REGULAR,
                  request_status: RequestStatus = RequestStatus.IDLE,
                  server_id: int = 0) -> None:
@@ -23,6 +23,9 @@ class User:
 
     def set_language(self, language: Languages) -> None:
         self.language = language
+
+    def set_model(self, model: Models) -> None:
+        self.model = model
 
     @classmethod
     def create_user(cls, user_id) -> 'User':

@@ -27,12 +27,14 @@ class Languages(enum.Enum):
 
             "set_language": "Please select a language",
             "set_language_after": "English",
-            "command_help": "Help",
-            "command_stop": "Stop",
-            "command_clear": "Clear context",
-            "command_set_language": "Set language",
-            "command_set_model": "Set model",
-            "cancel": "Cancel",
+            "command_help": "Help‎",
+            "command_stop": "Stop‎",
+            "command_clear": "Clear context‎",
+            "command_set_language": "Set language‎",
+            "command_set_model": "Set model‎",
+            "cancel": "Cancel‎",
+            "canceled": "Canceled",
+            "error": "Something went wrong",
         }
     )
     RU: Language = Language(
@@ -52,11 +54,13 @@ class Languages(enum.Enum):
 
             "set_language": "Пожалуйста, выберите язык",
             "set_language_after": "Русский",
-            "command_help": "Помощь",
-            "command_stop": "Остановить",
-            "command_clear": "Очистить контекст",
-            "command_set_language": "Изменить язык",
-            "command_set_model": "Изменить модель",
-            "cancel": "Отмена"
+            "command_help": "Помощь‎",
+            "command_stop": "Остановить‎",
+            "command_clear": "Очистить контекст‎",
+            "command_set_language": "Изменить язык‎",
+            "command_set_model": "Изменить модель‎",
+            "cancel": "Отмена‎",
+            "canceled": "Отменено",
+            "error": "Что-то пошло не так"
         }
     )
