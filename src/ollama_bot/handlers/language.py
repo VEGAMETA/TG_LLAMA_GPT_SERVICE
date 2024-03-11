@@ -29,15 +29,14 @@ async def langugage_change_handler(message: Message, state: FSMContext) -> None:
     """
     Allows user to cancel any action
     """
+    await state.set_state(UserState.chatting)
     user = users.get(message.from_user.id)
     for language in Languages:
         if message.text == language.value.name:
             user.set_language(language)
-            await state.set_state(UserState.chatting)
             answer = user.language.value.dictionary.get('set_language_after')
             await message.answer(answer, reply_markup=get_default_keyboard(user.language))
             return
     else:
-        await state.set_state(UserState.chatting)
         answer = user.language.value.dictionary.get('error')
         await message.answer(answer, reply_markup=get_default_keyboard(user.language))

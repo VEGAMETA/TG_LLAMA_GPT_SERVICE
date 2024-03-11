@@ -3,7 +3,7 @@ from ollama_bot.misc.gpt import Models, RequestStatus
 from ollama_bot.models.language import Languages, Language
 
 
-# TODO: Rewrite whole models when hardware will be able Postgres on docker
+# TODO: Postgres
 class User:
     def __init__(self,
                  user_id: int,

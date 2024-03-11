@@ -3,19 +3,46 @@ import json
 import logging
 import asyncio
 import aiohttp
-import aiogram
 import aiogram.exceptions
 import aiohttp.client_exceptions
+
+from aiogram import F
+from aiogram.types import Message
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
 from loader import dp
+from ollama_bot.states.user import UserState
+from ollama_bot.misc.commands import commands
 from ollama_bot.misc.gpt import RequestStatus
 from ollama_bot.models.user import User, users
-from ollama_bot.states.user import UserState
+from ollama_bot.keyboards.reply.default import get_default_keyboard
 
 
-@dp.message(aiogram.F.text)
-async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None:
+@dp.message(Command("stop"))
+@dp.message(F.text.in_(commands.get("command_stop")))
+async def stop_handler(message: Message) -> None:
+    """
+    Request for gpt to stop answering
+    """
+    user = users.get(message.from_user.id)
+    user.request_status = RequestStatus.STOP_REQUEST
+
+
+@dp.message(Command("clear"))
+@dp.message(F.text.in_(commands.get("command_clear")))
+async def clear_handler(message: Message) -> None:
+    """
+    Clears the context for user gpt request
+    """
+    user = users.get(message.from_user.id)
+    user.context.clear()
+    answer = user.language.value.dictionary.get('clear')
+    await message.answer(answer, reply_markup=get_default_keyboard(user.language))
+
+
+@dp.message(F.text)
+async def gpt_handler(message: Message, state: FSMContext) -> None:
     """
     This handler manage ollama gpt api calls with streaming and editing message for it.
     """
@@ -27,7 +54,8 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
     user = users.get(user_id) if user_id in users.keys() else User.create_user(user_id)
 
     if user.request_status == RequestStatus.PROCESSING:
-        await message.answer('Previous request is processing\nCall /stop to stop answering')
+        answering = user.language.value.dictionary.get('answering')
+        await message.answer(answering)
         return
 
     user.request_status = RequestStatus.PROCESSING
@@ -42,27 +70,28 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
     }
 
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60*15)) as session:
             async with session.post('http://host.docker.internal:11434/api/generate', json=data) as response:
                 async for chunk in response.content.iter_chunks():
                     try:
                         if not isinstance(chunk, tuple):
-                            await bot_message.edit_text(answer + "...\n\n(Technical issues)\nAnswer is empty")
+                            error = user.language.value.dictionary.get("error_empty")
+                            await bot_message.edit_text(answer + error)
                             return
 
                         # User's stop request handler
                         if users.get(user_id).request_status == RequestStatus.STOP_REQUEST:
-                            await bot_message.edit_text(answer + "...\n\nRequest stopped by user")
+                            error = user.language.value.dictionary.get("stopped")
+                            await bot_message.edit_text(answer + error)
                             return
 
-                        resp_json = json.loads(chunk[0].decode('utf-8'))
-                        answer += resp_json.get('response')
+                        resp_json = json.loads(chunk[0].decode("utf-8"))
+                        answer += resp_json.get("response")
 
                         # End of response, writing context
-                        if resp_json.get('done'):
+                        if resp_json.get("done"):
                             await bot_message.edit_text(answer)
-                            users.get(user_id).context = resp_json.get(
-                                "context")
+                            users.get(user_id).context = resp_json.get("context")
                             return
 
                         # Delay editing to avoid api requests excesses
@@ -96,14 +125,17 @@ async def gpt_handler(message: aiogram.types.Message, state: FSMContext) -> None
 
                     except aiohttp.client_exceptions.ClientConnectorError as e:
                         logging.error(e)
-                        await bot_message.edit_text(answer + "...\n\n(Technical issues)\nClient Connector Error")
+                        error = user.language.value.dictionary.get("error_connect")
+                        await bot_message.edit_text(answer + error)
 
-    except asyncio.exceptions.TimeoutError as _:
-        await bot_message.edit_text(answer + "...\n\nTimeout Error (>5min)")
+                    except asyncio.exceptions.TimeoutError as _:
+                        error = user.language.value.dictionary.get("error_timeout")
+                        await bot_message.edit_text(answer + error)
 
     except aiohttp.client_exceptions.ServerDisconnectedError as e:
         logging.error(e)
-        await bot_message.edit_text(answer + "...\n\n(Technical issues)\nServer disconnected")
+        error = user.language.value.dictionary.get("error_server")
+        await bot_message.edit_text(answer + error)
 
     finally:
         users.get(user_id).request_status = RequestStatus.IDLE

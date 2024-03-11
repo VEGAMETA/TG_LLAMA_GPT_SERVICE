@@ -1,6 +1,15 @@
 from ollama_bot.models.language import Languages
 
-commands = {
+commands_f: str = "\n".join({
+    "",
+    "/help",
+    "/stop",
+    "/clear",
+    "/set_language",
+    "/set_model",
+})
+
+commands: dict[str, set] = {
     "command_stop": set(),
     "command_help": set(),
     "command_clear": set(),

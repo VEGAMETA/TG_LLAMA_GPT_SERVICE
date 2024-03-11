@@ -23,8 +23,12 @@ async def set_model_handler(message: Message, state: FSMContext) -> None:
     answer = user.language.value.dictionary.get('set_model')
     await message.answer(answer, reply_markup=get_model_keyboard(user.language))
 
+
 @dp.message(UserState.choosing_model)
 async def model_change_handler(message: Message, state: FSMContext) -> None:
+    """
+    Changes model from list
+    """
     user = users.get(message.from_user.id)
     await state.set_state(UserState.chatting)
     for model in Models:
@@ -34,7 +38,5 @@ async def model_change_handler(message: Message, state: FSMContext) -> None:
             await message.answer(answer, reply_markup=get_default_keyboard(user.language))
             return
     else:
-        await state.set_state(UserState.chatting)
         answer = user.language.value.dictionary.get('error')
         await message.answer(answer, reply_markup=get_default_keyboard(user.language))
-        
