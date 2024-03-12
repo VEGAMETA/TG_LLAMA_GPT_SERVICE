@@ -3,7 +3,7 @@ greeting;Hello, ;Здравствуйте,
 start;\nI am gpt bot based on open-source models!\nFeel free to ask any question.\nType /help for info;\nЯ gpt бот, использующий модели в открытом доступе!\nЗадавайте любой вопрос\nНапишите /help для отображения команд
 restart;Hello again!\nType /help for info;И снова здравствуйте!\nНапишите /help для отображения команд
 command_stop;Stop‎;Остановить‎
-stopped;...\n\nRequest stopped by user;...\n\nЗапрос остановлен пользователем
+stopped;\.\.\.\n\nRequest stopped by user;\.\.\.\n\nЗапрос остановлен пользователем
 answering;Previous request is processing\nCall /stop to stop answering;Предыдущий запрос находится в обработке\nОтправьте /stop чтобы остановить выполнение запроса
 command_clear;Clear context‎;Очистить контекст‎
 clear;Context cleared;Контекст очищен
@@ -11,14 +11,14 @@ command_help;Help‎;Помощь‎
 help;List of commands:;Список команд:
 command_set_model;Set model‎;Изменить модель‎
 set_model;Please select a model;Пожалуйста, выберите модель
-set_model_after;Selected model: ";Выбранная модель: 
+set_model_after;Selected model: ;Выбранная модель: 
 command_set_language;Set language‎;Изменить язык‎
 set_language;Please select a language;Пожалуйста, выберите язык
 set_language_after;English language selected;Русский язык выбран
 cancel;Cancel‎;Отмена‎
 canceled;Canceled;Отменено
 error;Something went wrong;Что-то пошло не так
-error_empty;...\n\n(Technical issues)\nAnswer is empty;...\n\n(Технические неполадки)\nОтвет пустой
-error_connection;...\n\n(Technical issues)\nClient Connector Error;...\n\n(Технические неполадки)\nОшибка подключения клиента
-error_timeout;...\n\nTimeout Error;...\n\nОшибка время ожидания ответа превысило допустимое
-error_server;...\n\n(Technical issues)\nServer disconnected;...\n\n(Технические неполадки)\nСервер отключён
+error_empty;\.\.\.\n\n\(Technical issues\)\nAnswer is empty;\.\.\.\n\n\(Технические неполадки\)\nОтвет пустой
+error_connection;\.\.\.\n\n\(Technical issues\)\nClient Connector Error;\.\.\.\n\n\(Технические неполадки\)\nОшибка подключения клиента
+error_timeout;\.\.\.\n\nTimeout Error;\.\.\.\n\nОшибка время ожидания ответа превысило допустимое
+error_server;\.\.\.\n\n\(Technical issues\)\nServer disconnected;\.\.\.\n\n\(Технические неполадки\)\nСервер отключён

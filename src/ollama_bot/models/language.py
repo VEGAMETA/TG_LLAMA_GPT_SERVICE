@@ -1,11 +1,10 @@
 import enum
 import csv
-from aiogram.utils.markdown import hbold
 from collections import defaultdict
 
 columns = defaultdict(list)
 
-with open('src\\resources\\languages.csv', encoding="utf-8") as file:
+with open('./src/resources/languages.csv', encoding="utf-8") as file:
     reader = csv.DictReader(file,  delimiter=";")
     for row in reader:
         for k, v in row.items():

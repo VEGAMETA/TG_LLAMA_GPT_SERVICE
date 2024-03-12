@@ -18,6 +18,7 @@ from ollama_bot.misc.gpt import RequestStatus
 from ollama_bot.models.user import User, users
 from ollama_bot.keyboards.reply.default import get_default_keyboard
 
+special_chars = ('_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!')
 
 @dp.message(Command("stop"))
 @dp.message(F.text.in_(commands.get("command_stop")))
@@ -59,7 +60,7 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
         return
 
     user.request_status = RequestStatus.PROCESSING
-    bot_message = await message.answer('•••')
+    bot_message = await message.answer('•••', parse_mode="MarkdownV2")
     network_error = False
     bot_message_time = time.monotonic()
     answer = ''
@@ -76,27 +77,39 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                     try:
                         if not isinstance(chunk, tuple):
                             error = user.language.value.dictionary.get("error_empty")
-                            await bot_message.edit_text(answer + error)
+                            await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
                             return
 
                         # User's stop request handler
                         if users.get(user_id).request_status == RequestStatus.STOP_REQUEST:
                             error = user.language.value.dictionary.get("stopped")
-                            await bot_message.edit_text(answer + error)
+                            await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
                             return
-
+                        
+                        # Getting response and formatting
                         resp_json = json.loads(chunk[0].decode("utf-8"))
-                        answer += resp_json.get("response")
+                        response = resp_json.get("response")
+                        for special_char in special_chars:
+                            response = response.replace(special_char, f"\\{special_char}")
+                        answer += response
+                        
+                        # Formatting code blocks
+                        if answer.count("\`\`\`"):
+                            if answer.count("\`\`\`") % 2 == 0:
+                                answer = answer.replace("\`\`\`", "```")
+                        elif answer.count("\`") % 2 == 0:
+                            answer = answer.replace("\`", "`")
+                        
 
                         # End of response, writing context
                         if resp_json.get("done"):
-                            await bot_message.edit_text(answer)
+                            await bot_message.edit_text(answer, parse_mode="MarkdownV2")
                             users.get(user_id).context = resp_json.get("context")
                             return
 
                         # Delay editing to avoid api requests excesses
                         if time.monotonic() - bot_message_time > 3:
-                            await bot_message.edit_text(answer)
+                            await bot_message.edit_text(answer, parse_mode="MarkdownV2")
                             bot_message_time = time.monotonic()
 
                     # Json error handler (ignore?)
@@ -108,8 +121,12 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                     # Bad request error handler (how to handle other types?)
                     except aiogram.exceptions.TelegramBadRequest as e:
                         logging.error(e)
-                        if e.message == "Bad Request: message to edit not found":
+                        if "Bad Request: message to edit not found" in e.message:
                             return
+                        if "Bad Request: message is not modified" in e.message:
+                            continue
+                        if "Bad Request: can't parse entities" in e.message:
+                            await bot_message.edit_text(answer)
 
                     # Simple retry after error handler (waiting)
                     except aiogram.exceptions.TelegramRetryAfter as e:
@@ -132,10 +149,11 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                         error = user.language.value.dictionary.get("error_timeout")
                         await bot_message.edit_text(answer + error)
 
+                    
     except aiohttp.client_exceptions.ServerDisconnectedError as e:
         logging.error(e)
         error = user.language.value.dictionary.get("error_server")
-        await bot_message.edit_text(answer + error)
+        await bot_message.edit_text(answer + error, parse_mode="Markdown")
 
     finally:
         users.get(user_id).request_status = RequestStatus.IDLE
