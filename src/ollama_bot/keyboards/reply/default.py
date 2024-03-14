@@ -6,12 +6,12 @@ from ollama_bot.models.language import Languages
 
 def get_default_keyboard(language: Languages = Languages.EN) -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
-    for command_name, command in language.value.dictionary.items():
+    for command_name, command in language.items():
         if command_name.startswith("command_"):
             builder.button(text=command).adjust(1, True)
     return builder.as_markup()
 
 
 def set_cancel_button(builder: ReplyKeyboardBuilder, language: Languages):
-    text = language.value.dictionary.get("cancel")
+    text = language.get("cancel")
     builder.button(text=text).adjust(1, True)

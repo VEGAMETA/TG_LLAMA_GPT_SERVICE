@@ -4,14 +4,16 @@ services:
     container_name: python
     build: .
     environment:
-      BOT_TOKEN:
-      DB_HOST: "host.docker.internal"
-      DB_PORT: 5432
-      DB_PASSWORD: "password"
-      DB_USER: "postgres"
-      DB_NAME: "telegram"
+      - BOT_TOKEN=${BOT_TOKEN}
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5431
+      - DB_PASSWORD=password
+      - DB_USER=postgres
+      - DB_NAME=telegram
     networks:
-      - tg_bot_network      
+      - tg_bot_network
+    depends_on:
+      - postgres
 
   ollama:
     volumes:
@@ -52,15 +54,14 @@ services:
     container_name: postgres
     image: postgres:16.2
     environment:
-      POSTGRES_DB: "telegram"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "password"
-      PGDATA: "/var/lib/postgresql/data/pgdata"
+      - POSTGRES_DB=telegram
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - ../2. Init Database:/docker-entrypoint-initdb.d
       - tg-db:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - 5431:5432
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d telegram" ]
       interval: 10s
@@ -75,13 +76,13 @@ services:
     container_name: pgadmin
     image: dpage/pgadmin4:8.3
     environment:
-      PGADMIN_DEFAULT_EMAIL: "email@domain.com"
-      PGADMIN_DEFAULT_PASSWORD: "password"
-      PGADMIN_CONFIG_SERVER_MODE: "False"
+      - PGADMIN_DEFAULT_EMAIL=email@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+      - PGADMIN_CONFIG_SERVER_MODE=False
     volumes:
       - tg-db:/var/lib/pgadmin
     ports:
-      - "5050:80"
+      - 5050:80
     restart: unless-stopped
     deploy:
       resources:
@@ -90,6 +91,8 @@ services:
           memory: 1G
     networks:
       - tg_bot_network
+    depends_on:
+      - postgres
 
 volumes:
   tg-db:

@@ -6,8 +6,8 @@ from aiogram.filters import CommandStart, Command
 
 from loader import dp
 from ollama_bot.states.user import UserState
-from ollama_bot.misc.gpt import RequestStatus
-from ollama_bot.models.user import User, users
+from ollama_bot.models.user import User
+from ollama_bot.models.language import Languages
 from ollama_bot.misc.commands import commands, commands_f
 from ollama_bot.keyboards.reply.default import get_default_keyboard
 
@@ -19,20 +19,15 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     """
     await state.set_state(UserState.chatting)
     user_id = message.from_user.id
-    if user_id in users.keys():
-        user = users[user_id]
-        user.request_status = RequestStatus.IDLE
-        answer = user.language.value.dictionary.get("restart")
-        await message.answer(answer, reply_markup=get_default_keyboard(user.language))
-        return
-    user = User.create_user(user_id)
-    user_name = message.from_user.full_name
-    answer = (
-            user.language.value.dictionary.get("greeting") +
-            hbold(user_name) +
-            user.language.value.dictionary.get("start")
-    )
-    await message.answer(answer, reply_markup=get_default_keyboard(user.language))
+    user = await User.get_user_by_id(user_id)
+    if user:
+        language = await Languages.get_dict_by_name(user.language)
+        answer = language.get("restart")
+    else:
+        user = await User.create_user(user_id)
+        language = await User.get_language(user_id)
+        answer = language.get("greeting") + hbold(message.from_user.full_name) + language.get("start")
+    await message.answer(answer, reply_markup=get_default_keyboard(language))
 
 
 @dp.message(Command("cancel"))
@@ -46,9 +41,10 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
         return
 
     await state.set_state(UserState.chatting)
-    user = users.get(message.from_user.id)
-    answer = user.language.value.dictionary.get('canceled')
-    await message.answer(answer, reply_markup=get_default_keyboard(user.language))
+    user = await User.get_user_by_id(message.from_user.id)
+    language = await Languages.get_dict_by_name(user.language)
+    answer = language.get('canceled')
+    await message.answer(answer, reply_markup=get_default_keyboard(language))
 
 
 @dp.message(Command("help"))
@@ -57,6 +53,7 @@ async def help_handler(message: Message) -> None:
     """
     Help command handler sends list of commands
     """
-    user = users.get(message.from_user.id)
-    answer = user.language.value.dictionary.get('help')
+    user = await User.get_user_by_id(message.from_user.id)
+    language = await Languages.get_dict_by_name(user.language)
+    answer = language.get('help')
     await message.answer(answer + commands_f)

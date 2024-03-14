@@ -4,11 +4,16 @@ from collections import defaultdict
 
 columns = defaultdict(list)
 
-with open('./src/resources/languages.csv', encoding="utf-8") as file:
+try:
+    file = open('./src/resources/languages.csv', encoding="utf-8")
+except FileNotFoundError:
+    file = open('resources/languages.csv', encoding="utf-8")
+finally:
     reader = csv.DictReader(file,  delimiter=";")
     for row in reader:
         for k, v in row.items():
             columns[k].append(v.replace("\\n", "\n"))
+    file.close()
 
 
 class Language:
@@ -17,6 +22,7 @@ class Language:
         self.flag = flag
         self.dictionary = dictionary
 
+    
 
 class Languages(enum.Enum):
     EN: Language = Language(
@@ -29,3 +35,9 @@ class Languages(enum.Enum):
         flag="🇷🇺",
         dictionary=dict(zip(columns.get("Instance"), columns.get("Russian")))
     )
+
+    @classmethod
+    async def get_dict_by_name(cls, name: str) -> "Language":
+        for language in cls:
+            if language.name == name:
+                return language.value.dictionary

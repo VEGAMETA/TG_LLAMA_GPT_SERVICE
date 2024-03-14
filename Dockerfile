@@ -3,10 +3,14 @@ FROM python:3.10-alpine
 
 WORKDIR /www
 
-COPY requirements.txt .
+COPY ./requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip install -r ./requirements.txt
 
 COPY ./src ./src
 
-CMD ["python", "./src/bot.py"]
+COPY ./setup.sh .
+
+RUN chmod +x ./setup.sh
+
+CMD ["./setup.sh"]

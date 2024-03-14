@@ -12,13 +12,16 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
 from loader import dp
+from ollama_bot.misc.gpt import Models
+from ollama_bot.models.language import Languages
 from ollama_bot.states.user import UserState
 from ollama_bot.misc.commands import commands
-from ollama_bot.misc.gpt import RequestStatus
-from ollama_bot.models.user import User, users
+from ollama_bot.models.user import User
 from ollama_bot.keyboards.reply.default import get_default_keyboard
 
-special_chars = ('_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!')
+special_chars = ('_', '*', '[', ']', '(', ')', '~', '`',
+                 '>', '#', '+', '-', '=', '|', '{', '}', '.', '!')
+
 
 @dp.message(Command("stop"))
 @dp.message(F.text.in_(commands.get("command_stop")))
@@ -26,9 +29,7 @@ async def stop_handler(message: Message) -> None:
     """
     Request for gpt to stop answering
     """
-    user = users.get(message.from_user.id)
-    user.request_status = RequestStatus.STOP_REQUEST
-
+    await User.set_processing(message.from_user.id, False)
 
 @dp.message(Command("clear"))
 @dp.message(F.text.in_(commands.get("command_clear")))
@@ -36,10 +37,12 @@ async def clear_handler(message: Message) -> None:
     """
     Clears the context for user gpt request
     """
-    user = users.get(message.from_user.id)
-    user.context.clear()
-    answer = user.language.value.dictionary.get('clear')
-    await message.answer(answer, reply_markup=get_default_keyboard(user.language))
+    user_id = message.from_user.id
+    user = await User.get_user_by_id(message.from_user.id)
+    await User.set_context(user_id, [])
+    language = await Languages.get_dict_by_name(user.language)
+    answer = language.get('clear')
+    await message.answer(answer, reply_markup=get_default_keyboard(language))
 
 
 @dp.message(F.text)
@@ -52,22 +55,27 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
         return
 
     user_id: int = message.from_user.id
-    user = users.get(user_id) if user_id in users.keys() else User.create_user(user_id)
+    user = await User.get_user_by_id(user_id)
+    if not user:
+        await User.create_user(user_id)
+        user = await User.get_user_by_id(user_id)
 
-    if user.request_status == RequestStatus.PROCESSING:
-        answering = user.language.value.dictionary.get('answering')
+    language = await Languages.get_dict_by_name(user.language)
+
+    if user.processing:
+        answering = language.get('answering')
         await message.answer(answering)
         return
 
-    user.request_status = RequestStatus.PROCESSING
+    await User.set_processing(user_id, True)
     bot_message = await message.answer('•••', parse_mode="MarkdownV2")
     network_error = False
     bot_message_time = time.monotonic()
     answer = ''
     data = {
         "prompt": message.text,
-        "model": users.get(user_id).model.value,
-        "context": users.get(user_id).context,
+        "model": Models.get_model_by_name(user.model),
+        "context": user.context,
     }
 
     try:
@@ -76,35 +84,36 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                 async for chunk in response.content.iter_chunks():
                     try:
                         if not isinstance(chunk, tuple):
-                            error = user.language.value.dictionary.get("error_empty")
+                            error = language.get("error_empty")
                             await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
                             return
 
                         # User's stop request handler
-                        if users.get(user_id).request_status == RequestStatus.STOP_REQUEST:
-                            error = user.language.value.dictionary.get("stopped")
+                        if not await User.get_processing(user_id):
+                            error = language.get("stopped")
                             await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
                             return
-                        
+
                         # Getting response and formatting
                         resp_json = json.loads(chunk[0].decode("utf-8"))
                         response = resp_json.get("response")
                         for special_char in special_chars:
-                            response = response.replace(special_char, f"\\{special_char}")
+                            response = response.replace(
+                                special_char, f"\\{special_char}")
                         answer += response
-                        
+
                         # Formatting code blocks
                         if answer.count("\`\`\`"):
                             if answer.count("\`\`\`") % 2 == 0:
                                 answer = answer.replace("\`\`\`", "```")
                         elif answer.count("\`") % 2 == 0:
                             answer = answer.replace("\`", "`")
-                        
 
                         # End of response, writing context
                         if resp_json.get("done"):
                             await bot_message.edit_text(answer, parse_mode="MarkdownV2")
-                            users.get(user_id).context = resp_json.get("context")
+                            context = resp_json.get("context")
+                            await User.set_context(user_id, context)
                             return
 
                         # Delay editing to avoid api requests excesses
@@ -142,18 +151,17 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
 
                     except aiohttp.client_exceptions.ClientConnectorError as e:
                         logging.error(e)
-                        error = user.language.value.dictionary.get("error_connect")
-                        await bot_message.edit_text(answer + error)
+                        error = language.get("error_connect")
+                        await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
 
                     except asyncio.exceptions.TimeoutError as _:
-                        error = user.language.value.dictionary.get("error_timeout")
-                        await bot_message.edit_text(answer + error)
+                        error = language.get("error_timeout")
+                        await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
 
-                    
     except aiohttp.client_exceptions.ServerDisconnectedError as e:
         logging.error(e)
-        error = user.language.value.dictionary.get("error_server")
-        await bot_message.edit_text(answer + error, parse_mode="Markdown")
+        error = language.get("error_server")
+        await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
 
     finally:
-        users.get(user_id).request_status = RequestStatus.IDLE
+        await User.set_processing(user_id, False)
