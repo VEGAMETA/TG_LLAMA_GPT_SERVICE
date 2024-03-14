@@ -32,12 +32,14 @@ class Transaction(Base):
     user_id = Column(Integer, ForeignKey("users.user_id"))
     time = Column(DateTime, default=datetime.now())
     state = Column(SMALLINT, default=TransactionState.PENDING.value)
-    expire_time = Column(
-        DateTime, default=datetime.now() + timedelta(minutes=30))
+    expire_time = Column(DateTime, default=datetime.now() + timedelta(minutes=30))
 
     @staticmethod
     @db.with_session
     async def create_transaction(session: AsyncSession, user_id: int) -> UUID:
+        """
+        Creates new transaction and returns uuid.
+        """
         transaction = Transaction(user_id=user_id)
         session.add(transaction)
         return transaction.uuid
@@ -45,6 +47,9 @@ class Transaction(Base):
     @classmethod
     @db.with_session_no_commit_method
     async def get_transactions_by_user_id(cls, session: AsyncSession, user_id: int) -> list['Transaction']:
+        """
+        Returns list of transactions by user id.
+        """
         table = cls.__table__
         query = table.select().where(table.c.user_id == user_id)
         result = await session.execute(query)
@@ -54,6 +59,9 @@ class Transaction(Base):
     @classmethod
     @db.with_session_no_commit_method
     async def get_transaction_by_uuid(cls, session: AsyncSession, uuid: UUID) -> Row:
+        """
+        Returns transaction by given uuid.
+        """
         table = cls.__table__
         query = table.__table__.select().where(table.c.uuid == uuid)
         result = await session.execute(query)

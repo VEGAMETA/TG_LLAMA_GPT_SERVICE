@@ -6,6 +6,9 @@ from ollama_bot.handlers import default, language, models, subscription, gpt
 
 
 async def set_commands():
+    """
+    Set commands for menu.
+    """
     await bot.set_my_commands([
         BotCommand(command="stop", description="🚫"),
         BotCommand(command="clear", description="🧹"),

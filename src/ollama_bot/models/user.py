@@ -21,22 +21,10 @@ class User(Base):
     permission = Column(SMALLINT, default=0)
     processing = Column(Boolean, default=False)
 
-    @classmethod
-    @db.with_session_no_commit_method
-    async def get_user_by_id(cls, session: AsyncSession, user_id: int) -> Row:
-        """
-        Returns user by id (tuple)
-        """
-        table = cls.__table__
-        query = table.select().where(table.c.user_id == user_id)
-        result = await session.execute(query)
-        user = result.first()
-        return user
-
     @staticmethod
     async def create_user(user_id: int) -> Row:
         """
-        Checks if user exists and adds new user to the table
+        Checks if user exists and adds new user to the table by user id.
         """
         existing_user = await User.get_user_by_id(user_id)
         if existing_user:
@@ -45,42 +33,53 @@ class User(Base):
         user = await User._new_user(user_id)
         return user
 
+    @classmethod
+    @db.with_session_no_commit_method
+    async def get_user_by_id(cls, session: AsyncSession, user_id: int) -> Row:
+        """
+        Returns user Row by user id.
+        """
+        table = cls.__table__
+        query = table.select().where(table.c.user_id == user_id)
+        result = await session.execute(query)
+        user = result.first()
+        return user
+
     @staticmethod
     @db.with_session
     async def _new_user(session: AsyncSession, user_id: int) -> None:
         """
-        Adds new user to the table
+        Adds new user by user id.
         """
         user = User(user_id=user_id)
         session.add(user)
 
     @classmethod
     @db.with_session_method
-    async def set_language(cls, session: AsyncSession, user_id: int, new_language: Languages) -> None:
-        for language in Languages:
-            if language.name == new_language.name:
-                table = cls.__table__
-                stmt = table.update().where(table.c.user_id == user_id).values(language=language.name)
-                await session.execute(stmt)
-                return
-        else:
-            logging.warning("Language not found")
+    async def set_language(cls, session: AsyncSession, user_id: int, language: Languages) -> None:
+        """
+        Sets user language for given user (by id).
+        """
+        table = cls.__table__
+        stmt = table.update().where(table.c.user_id == user_id).values(language=language.name)
+        await session.execute(stmt)
 
     @classmethod
     @db.with_session_method
-    async def set_model(cls, session: AsyncSession, user_id: int, _model: Models) -> None:
-        for model in Models:
-            if model.name == _model.name:
-                table = cls.__table__
-                stmt = table.update().where(table.c.user_id == user_id).values(model=model.name)
-                await session.execute(stmt)
-                return
-        else:
-            logging.warning("Model not found")
+    async def set_model(cls, session: AsyncSession, user_id: int, model: Models) -> None:
+        """
+        Sets model for user for given user (by id).
+        """
+        table = cls.__table__
+        stmt = table.update().where(table.c.user_id == user_id).values(model=model.name)
+        await session.execute(stmt)
 
     @classmethod
     @db.with_session_method
     async def set_context(cls, session: AsyncSession, user_id: int, context: list[int]) -> None:
+        """
+        Sets context for user for given user (by id).
+        """
         table = cls.__table__
         stmt = table.update().where(table.c.user_id == user_id).values(context=context)
         await session.execute(stmt)
@@ -88,12 +87,18 @@ class User(Base):
     @classmethod
     @db.with_session_method
     async def set_processing(cls, session: AsyncSession, user_id: int, flag: bool) -> None:
+        """
+        Sets user processing flag for given user (by id).
+        """
         table = cls.__table__
         stmt = table.update().where(table.c.user_id == user_id).values(processing=flag)
         await session.execute(stmt)
 
     @staticmethod
     async def get_language(user_id) -> Languages:
+        """
+        Returns user language dictionary by user id.
+        """
         user = await User.get_user_by_id(user_id)
         for language in Languages:
             if language.name == user.language:
@@ -105,6 +110,9 @@ class User(Base):
     @staticmethod
     @db.with_session
     async def get_model(user_id) -> Models:
+        """
+        Returns chosen user model by user id.
+        """
         user = await User.get_user_by_id(user_id)
         for model in Models:
             if model.name == user.model:
@@ -115,10 +123,16 @@ class User(Base):
 
     @staticmethod
     async def get_context(user_id) -> list[int]:
+        """
+        Returns user context by user id.
+        """
         user = await User.get_user_by_id(user_id)
         return user.context
 
     @staticmethod
     async def get_processing(user_id) -> bool:
+        """
+        Returns user processing flag by user id.
+        """
         user = await User.get_user_by_id(user_id)
         return user.processing

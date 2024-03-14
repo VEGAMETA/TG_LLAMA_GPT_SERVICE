@@ -14,9 +14,9 @@ from ollama_bot.keyboards.reply.language import get_language_keyboard
 
 @dp.message(Command("set_language"))
 @dp.message(F.text.in_(commands.get("command_set_language")))
-async def set_language_handler(message: Message, state: FSMContext) -> None:
+async def langugage_change_handler(message: Message, state: FSMContext) -> None:
     """
-    This handler allows to change the language.
+    Handles language change.
     """
     await state.set_state(UserState.choosing_language)
     user = await User.get_user_by_id(message.from_user.id)
@@ -26,9 +26,9 @@ async def set_language_handler(message: Message, state: FSMContext) -> None:
 
 
 @dp.message(UserState.choosing_language)
-async def langugage_change_handler(message: Message, state: FSMContext) -> None:
+async def set_language_handler(message: Message, state: FSMContext) -> None:
     """
-    Allows user to cancel any action
+    Handles language set.
     """
     await state.set_state(UserState.chatting)
     user_id = message.from_user.id

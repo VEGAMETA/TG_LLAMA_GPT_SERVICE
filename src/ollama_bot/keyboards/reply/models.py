@@ -7,6 +7,9 @@ from ollama_bot.keyboards.reply.default import set_cancel_button
 
 
 def get_model_keyboard(language: Languages = Languages.EN) -> ReplyKeyboardMarkup:
+    """
+    Returns model keyboard by given language.
+    """
     builder = ReplyKeyboardBuilder()
     for model in Models:
         builder.button(text=model.name).adjust(1, True)

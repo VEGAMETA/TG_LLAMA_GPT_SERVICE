@@ -34,7 +34,7 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
 @dp.message(F.text.in_(commands.get("cancel")))
 async def cancel_handler(message: Message, state: FSMContext) -> None:
     """
-    Allows user to cancel any action
+    Allows user to cancel any action by resetting state.
     """
     current_state = await state.get_state()
     if current_state == UserState.chatting:
@@ -51,7 +51,7 @@ async def cancel_handler(message: Message, state: FSMContext) -> None:
 @dp.message(F.text.in_(commands.get("command_help")))
 async def help_handler(message: Message) -> None:
     """
-    Help command handler sends list of commands
+    Help command handler (sends list of avalible commands).
     """
     user = await User.get_user_by_id(message.from_user.id)
     language = await Languages.get_dict_by_name(user.language)

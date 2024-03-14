@@ -19,8 +19,10 @@ from ollama_bot.misc.commands import commands
 from ollama_bot.models.user import User
 from ollama_bot.keyboards.reply.default import get_default_keyboard
 
-special_chars = ('_', '*', '[', ']', '(', ')', '~', '`',
-                 '>', '#', '+', '-', '=', '|', '{', '}', '.', '!')
+special_chars = (
+    '_', '*', '[', ']', '(', ')', '~', '`',
+    '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'
+)
 
 
 @dp.message(Command("stop"))
@@ -30,6 +32,7 @@ async def stop_handler(message: Message) -> None:
     Request for gpt to stop answering
     """
     await User.set_processing(message.from_user.id, False)
+
 
 @dp.message(Command("clear"))
 @dp.message(F.text.in_(commands.get("command_clear")))

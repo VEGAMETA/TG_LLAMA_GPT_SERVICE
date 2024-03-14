@@ -15,9 +15,9 @@ from ollama_bot.keyboards.reply.default import get_default_keyboard
 
 @dp.message(Command("set_model"))
 @dp.message(F.text.in_(commands.get("command_set_model")))
-async def set_model_handler(message: Message, state: FSMContext) -> None:
+async def model_change_handler(message: Message, state: FSMContext) -> None:
     """
-    This handler sends models list and allows to set a model.
+    Handles model change.
     """
     await state.set_state(UserState.choosing_model)
     user = await User.get_user_by_id(message.from_user.id)
@@ -27,9 +27,9 @@ async def set_model_handler(message: Message, state: FSMContext) -> None:
 
 
 @dp.message(UserState.choosing_model)
-async def model_change_handler(message: Message, state: FSMContext) -> None:
+async def set_model_handler(message: Message, state: FSMContext) -> None:
     """
-    Changes model from list
+    Handles model set.
     """
     await state.set_state(UserState.chatting)
     user_id = message.from_user.id
