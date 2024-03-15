@@ -17,10 +17,10 @@ from ollama_bot.models.language import Languages
 from ollama_bot.states.user import UserState
 from ollama_bot.misc.commands import commands
 from ollama_bot.models.user import User
-from ollama_bot.keyboards.reply.default import get_default_keyboard
+from ollama_bot.misc.markdown import escape
 
 special_chars = (
-    '_', '*', '[', ']', '(', ')', '~', '`',
+    '_', '*', '[', ']', '(', ')', '~', '`', ',',
     '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'
 )
 
@@ -45,7 +45,7 @@ async def clear_handler(message: Message) -> None:
     await User.set_context(user_id, [])
     language = await Languages.get_dict_by_name(user.language)
     answer = language.get('clear')
-    await message.answer(answer, reply_markup=get_default_keyboard(language))
+    await message.answer(answer)
 
 
 @dp.message(F.text)
@@ -54,7 +54,7 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
     This handler manage ollama gpt api calls with streaming and editing message for it.
     """
     current_state = await state.get_state()
-    if current_state != UserState.chatting:
+    if current_state not in (UserState.chatting, None):
         return
 
     user_id: int = message.from_user.id
@@ -81,6 +81,8 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
         "context": user.context,
     }
 
+    not_escaped_answer = ''
+    
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60*15)) as session:
             async with session.post('http://host.docker.internal:11434/api/generate', json=data) as response:
@@ -100,17 +102,8 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                         # Getting response and formatting
                         resp_json = json.loads(chunk[0].decode("utf-8"))
                         response = resp_json.get("response")
-                        for special_char in special_chars:
-                            response = response.replace(
-                                special_char, f"\\{special_char}")
-                        answer += response
-
-                        # Formatting code blocks
-                        if answer.count("\`\`\`"):
-                            if answer.count("\`\`\`") % 2 == 0:
-                                answer = answer.replace("\`\`\`", "```")
-                        elif answer.count("\`") % 2 == 0:
-                            answer = answer.replace("\`", "`")
+                        not_escaped_answer += response
+                        answer = await escape(not_escaped_answer)
 
                         # End of response, writing context
                         if resp_json.get("done"):
@@ -136,10 +129,13 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                         if "Bad Request: message to edit not found" in e.message:
                             return
                         if "Bad Request: message is not modified" in e.message:
+                            bot_message_time = time.monotonic()
                             continue
                         if "Bad Request: can't parse entities" in e.message:
-                            await bot_message.edit_text(answer)
-
+                            await bot_message.edit_text(not_escaped_answer)
+                            bot_message_time = time.monotonic()
+                            continue
+                        
                     # Simple retry after error handler (waiting)
                     except aiogram.exceptions.TelegramRetryAfter as e:
                         logging.error(e)

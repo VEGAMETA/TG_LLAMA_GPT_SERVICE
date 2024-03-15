@@ -10,6 +10,14 @@ This project is using Aiogram, Postgres and Ollama
 
 ---
 
+## Installation
+
+### Clone repo
+```bash
+git clone https://github.com/VEGAMETA/TG_LLAMA_GPT_SERVICE.git
+cd TG_LLAMA_GPT_SERVICE
+```
+
 ### Docker
 Build image
 ```bash
