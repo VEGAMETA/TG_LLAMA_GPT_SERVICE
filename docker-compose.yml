@@ -15,26 +15,6 @@ services:
     depends_on:
       - postgres
 
-  ollama:
-    volumes:
-      - llm-service:/root/.ollama
-    container_name: ollama
-    pull_policy: always
-    tty: true
-    restart: unless-stopped
-    image: ollama/ollama:0.1.27
-    ports:
-      - 11434:11434
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    networks:
-      - tg_bot_network
-
   postgres:
     container_name: postgres
     image: postgres:16.2
