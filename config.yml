@@ -1,7 +1,0 @@
-CPU: False
-GPU: NVIDIA
-
-Models:
-  LLAMA2_TEST: llama2
-  MIXTRAL: dolphin-mixtral:v2.7
-  CODE_BOOGA: codebooga:34b-v0.1-q4_0
