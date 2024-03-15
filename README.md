@@ -29,10 +29,9 @@ Run service
 docker-compose up
 ```
 
-#### Do not forget to pull needed [model(s)](https://ollama.com/library) at ollama container
-```bash
-ollama pull llama2
-```
+You can read little [docker manual](https://hub.docker.com/r/ollama/ollama) for ollama to set up your drivers. You can also  change your GPU (by now linux only supports AMD) or use CPU at
+config.yml and feel free to modify models section but prepare 
+to wait a lot until required models downloaded.
 
 Stop service
 ```bash
