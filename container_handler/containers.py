@@ -13,7 +13,7 @@ class ContainerHandler:
     @classmethod
     async def create_container(cls, port: int) -> bool:
         if bool(config.get('CPU')) or not config.get('GPU'):
-            return not await cls.run(
+            return not (await cls.run(
                 'docker',
                 'run',
                 '-d',
@@ -24,9 +24,10 @@ class ContainerHandler:
                 '--network',
                 'tg_llama_gpt_service_tg_bot_network',
                 'ollama/ollama:0.1.29',
-            )[1]
+            ))[1]
+
         if config.get('GPU').casefold() == 'nvidia':
-            return not await cls.run(
+            return not (await cls.run(
                 'docker',
                 'run',
                 '-d',
@@ -40,9 +41,9 @@ class ContainerHandler:
                 '-v',
                 'tg_llama_gpt_service_llm-service:/root/.ollama',
                 'ollama/ollama:0.1.29',
-            )[1]
+            ))[1]
         elif config.get('GPU').casefold() == 'amd':
-            return not await cls.run(
+            return not (await cls.run(
                 'docker',
                 'run',
                 '-d',
@@ -59,7 +60,7 @@ class ContainerHandler:
                 '-v',
                 'tg_llama_gpt_service_llm-service:/root/.ollama',
                 'ollama/ollama:0.1.29:rocm',
-            )[1]
+            ))[1]
 
     @classmethod
     async def _load_model(cls, port: int, model: str) -> str:
@@ -74,15 +75,15 @@ class ContainerHandler:
 
     @classmethod
     async def start_container(cls, port: int) -> bool:
-        return not await cls.run('docker', 'start', f'ollama{port}')[1]
+        return not (await cls.run('docker', 'start', f'ollama{port}'))[1]
 
     @classmethod
     async def stop_container(cls, port: int) -> bool:
-        return not await cls.run('docker', 'stop', f'ollama{port}')[1]
+        return not (await cls.run('docker', 'stop', f'ollama{port}'))[1]
 
     @classmethod
     async def delete_container(cls, port: int) -> bool:
-        return await cls.run('docker', 'rm', f'ollama{port}')[1] if await cls.stop_container(port) else False
+        return (await cls.run('docker', 'rm', f'ollama{port}'))[1] if await cls.stop_container(port) else False
 
     @classmethod
     async def prepare_container(cls, port: int, model: str) -> bool:
@@ -92,11 +93,9 @@ class ContainerHandler:
             return False
 
         if "is not running" in error.decode():
-            logging.info(f"Container ollama{port} is not running trying to run it")
-            if await cls.start_container(port):
-                _, error = await cls._load_model(port, model)
-                return not ("is not running" in error.decode() or "No such container" in error.decode())
-            else:
+            logging.info(f"Container ollama{port} is not running trying to start it")
+            if not await cls.start_container(port):
                 return False
+            return not (await cls._load_model(port, model))[1]
 
         return True

@@ -1,17 +1,20 @@
 import asyncio
+import logging
 import urllib.parse
-from container_handler.containers import create_container
+from container_handler.containers import ContainerHandler
+from container_handler.config import config
+
 
 class Server:
 
-    def __init__(self, host:str='localhost', port:int=11433) -> None:
+    def __init__(self, host: str = 'localhost', port: int = int(config.get('CONTAINER_HANDLER_SERVER_PORT', 11433))) -> None:
         self.host = host
         self.port = port
-    
+
     async def start(self):
-        server = await asyncio.start_server(self.handle_request, '127.0.0.1', 23157)
+        server = await asyncio.start_server(self.handle_request, self.host, self.port)
         addr = server.sockets[0].getsockname()
-        print(f'Serving on {addr}')
+        logging.info(f'Serving on {addr}')
         async with server:
             await server.serve_forever()
 
@@ -21,13 +24,19 @@ class Server:
 
         parsed = urllib.parse.urlparse(message.splitlines()[0])
         query = urllib.parse.parse_qs(parsed.query)
-        
+
         match parsed.path:
-            case '/run_container':
-                response, status_code = await self.run_container(query)
+            case '/create_container':
+                response, status_code = await self.create_container(query)
+            case '/start_container':
+                response, status_code = await self.start_container(query)
+            case '/stop_container':
+                response, status_code = await self.stop_container(query)
+            case '/delete_container':
+                response, status_code = await self.delete_container(query)
             case _:
                 response, status_code = "Invalid request", 404
-                
+
         response_headers = (
             f'HTTP/1.1 {status_code}\r\n'
             'Content-Type: text/plain; charset=utf-8\r\n'
@@ -41,32 +50,83 @@ class Server:
         await writer.drain()
         writer.close()
 
-    async def run_container(self, query):
-            if not  {'port', 'model'}.issubset(query):
-                return "Invalid request, port and model parameters are required", 400
+    async def create_container(self, query):
+        if not {'port', 'model'}.issubset(query):
+            return "Invalid request, port and model parameters are required", 400
 
-            port = query.get('port')[0]
-            model = query.get('model')[0]
+        port = query.get('port')[0]
+        model = query.get('model')[0]
 
-            try:
-                port = int(port)
-            except ValueError:
-                return "Invalid request, port must be an integer", 400
+        try:
+            port = int(port)
+        except ValueError:
+            return "Invalid request, port must be an integer", 400
 
-            if port not in range(1025, 65536):
-                return "Invalid request, port must be between 1025 and 65535", 400
-            
-            docker_response = create_container(port, model)
-            
-            if docker_response.endswith("port is already allocated"):
-                return "Port is already allocated (not by container)", 409
-                
-            if "is already in use by container" in docker_response:
-                return "Port is already in use by another container", 409
-            
-            ...
-            
-            return f"Starting container at port {port} and model {model}", 201
+        if port not in range(1025, 65536):
+            return "Invalid request, port must be between 1025 and 65535", 400
 
-server = Server()
-asyncio.run(server.start())
+        if not ContainerHandler.create_container(port):
+            return "Port is already allocated", 409
+
+        if not await ContainerHandler.prepare_container(port, model):
+            return "Failed to prepare container", 500
+
+        return f"Starting container at port {port} and model {model}", 201
+
+    async def start_container(self, query):
+        if not {'port', 'model'}.issubset(query):
+            return "Invalid request, port and model parameters are required", 400
+
+        port = query.get('port')[0]
+        model = query.get('model')[0]
+
+        try:
+            port = int(port)
+        except ValueError:
+            return "Invalid request, port must be an integer", 400
+
+        if port not in range(1025, 65536):
+            return "Invalid request, port must be between 1025 and 65535", 400
+
+        if not await ContainerHandler.prepare_container(port, model):
+            return "Failed to prepare container", 500
+
+        return f"Starting container at port {port} and model {model}", 201
+
+    async def stop_container(self, query):
+        if 'port' not in query:
+            return "Invalid request, port parameter is required", 400
+
+        port = query.get('port')[0]
+
+        try:
+            port = int(port)
+        except ValueError:
+            return "Invalid request, port must be an integer", 400
+
+        if port not in range(1025, 65536):
+            return "Invalid request, port must be between 1025 and 65535", 400
+
+        if not await ContainerHandler.stop_container(port):
+            return "Failed to stop container", 500
+
+        return f"Stopping container at port {port}", 200
+
+    async def delete_container(self, query):
+        if 'port' not in query:
+            return "Invalid request, port parameter is required", 400
+
+        port = query.get('port')[0]
+
+        try:
+            port = int(port)
+        except ValueError:
+            return "Invalid request, port must be an integer", 400
+
+        if port not in range(1025, 65536):
+            return "Invalid request, port must be between 1025 and 65535", 400
+
+        if not await ContainerHandler.delete_container(port):
+            return "Failed to delete container", 500
+
+        return f"Deleting container at port {port}", 204
