@@ -1,7 +1,7 @@
 import logging
 import asyncio
 from asyncio.subprocess import PIPE
-from project_config import config
+from src.project_config import config
 
 
 class ContainerHandler:
