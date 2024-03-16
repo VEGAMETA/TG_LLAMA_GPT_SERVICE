@@ -2,14 +2,19 @@ import sys
 import logging
 import asyncio
 from container_handler.server import Server
-
+from container_handler.pull_models import ModelPuller
+from container_handler.composer import Composer
 
 async def main() -> None:
     server = Server()
-    # run docker-compose build and up in the background
-    # await asyncio.create_subprocess_shell('docker-compose', 'build')
-    # await asyncio.create_subprocess_shell('docker-compose', 'up')
-    await server.start()
+    puller = ModelPuller()
+    composer = Composer()
+    
+    await asyncio.gather(
+        server.start(), 
+        puller.start(), 
+        composer.start()
+    )
 
 if __name__ == '__main__':
     logging.basicConfig(
