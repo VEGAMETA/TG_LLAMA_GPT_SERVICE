@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
 from loader import dp
-from ollama_bot.misc.gpt import Models
+from project_config import models
 from ollama_bot.models.language import Languages
 from ollama_bot.models.user import User
 from ollama_bot.states.user import UserState
@@ -35,10 +35,10 @@ async def set_model_handler(message: Message, state: FSMContext) -> None:
     user_id = message.from_user.id
     user = await User.get_user_by_id(user_id)
     language = await Languages.get_dict_by_name(user.language)
-    for model in Models:
-        if message.text == model.name:
+    for model in models:
+        if message.text == model:
             await User.set_model(user_id, model)
-            answer = language.get('set_model_after') + model.name
+            answer = language.get('set_model_after') + model
             await message.answer(answer, reply_markup=get_default_keyboard(language))
             return
     else:

@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, Column, Integer, String, SMALLINT, ARRAY, update
 from sqlalchemy.engine.row import Row
 
 from loader import db
-from ollama_bot.misc.gpt import Models
+from project_config import models
 from ollama_bot.models.base import Base
 from ollama_bot.models.language import Languages
 
@@ -15,7 +15,7 @@ class User(Base):
     user_id = Column(Integer, primary_key=True, unique=True)
     balance = Column(Integer, default=0)
     context = Column(ARRAY(Integer), default=[])
-    model = Column(String, default=Models.LLAMA2_TEST.name)
+    model = Column(String, default=next(iter(models)))
     language = Column(String, default=Languages.EN.name)
     server_id = Column(SMALLINT, default=0)
     permission = Column(SMALLINT, default=0)
@@ -66,12 +66,12 @@ class User(Base):
 
     @classmethod
     @db.with_session_method
-    async def set_model(cls, session: AsyncSession, user_id: int, model: Models) -> None:
+    async def set_model(cls, session: AsyncSession, user_id: int, model: str) -> None:
         """
         Sets model for user for given user (by id).
         """
         table = cls.__table__
-        stmt = table.update().where(table.c.user_id == user_id).values(model=model.name)
+        stmt = table.update().where(table.c.user_id == user_id).values(model=model)
         await session.execute(stmt)
 
     @classmethod
@@ -109,17 +109,17 @@ class User(Base):
 
     @staticmethod
     @db.with_session
-    async def get_model(user_id) -> Models:
+    async def get_model(user_id) -> str:
         """
         Returns chosen user model by user id.
         """
         user = await User.get_user_by_id(user_id)
-        for model in Models:
-            if model.name == user.model:
-                return model.value
+        for model in models:
+            if model == user.model:
+                return models[model]
         else:
             logging.warning("Model not found")
-            return Models.LLAMA2_TEST.name
+            return model[next(iter(models))]
 
     @staticmethod
     async def get_context(user_id) -> list[int]:

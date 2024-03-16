@@ -12,7 +12,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 
 from loader import dp
-from ollama_bot.misc.gpt import Models
+from project_config import models
 from ollama_bot.models.language import Languages
 from ollama_bot.states.user import UserState
 from ollama_bot.misc.commands import commands
@@ -77,7 +77,7 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
     answer = ''
     data = {
         "prompt": message.text,
-        "model": Models.get_model_by_name(user.model),
+        "model": models[user.model],
         "context": user.context,
     }
 
