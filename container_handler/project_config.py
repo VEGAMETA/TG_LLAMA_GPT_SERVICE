@@ -4,3 +4,6 @@ with open('config.yml') as f:
     lines = f.readlines()
 
 config = parse_yaml_lines(lines)
+for key, value in config.items():
+    if value == "False":
+        config[key] = False

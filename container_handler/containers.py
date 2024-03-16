@@ -1,7 +1,7 @@
+import logging
 import asyncio
 from asyncio.subprocess import PIPE
-import logging
-from container_handler.config import config
+from container_handler.project_config import config
 
 
 class ContainerHandler:
@@ -40,7 +40,7 @@ class ContainerHandler:
                 'tg_llama_gpt_service_tg_bot_network',
                 '-v',
                 'tg_llama_gpt_service_llm-service:/root/.ollama',
-                'ollama/ollama:0.1.29',
+                'ollama/ollama:0.1.27', # 0.1.29
             ))[1]
         elif config.get('GPU').casefold() == 'amd':
             return not (await cls.run(
@@ -83,19 +83,20 @@ class ContainerHandler:
 
     @classmethod
     async def delete_container(cls, port: int) -> bool:
-        return (await cls.run('docker', 'rm', f'ollama{port}'))[1] if await cls.stop_container(port) else False
+        return not (await cls.run('docker', 'rm', f'ollama{port}'))[1] if await cls.stop_container(port) else False
 
     @classmethod
     async def prepare_container(cls, port: int, model: str) -> bool:
         _, error = await cls._load_model(port, model)
-
+        
         if "No such container" in error.decode():
             return False
-
+        
         if "is not running" in error.decode():
             logging.info(f"Container ollama{port} is not running trying to start it")
             if not await cls.start_container(port):
                 return False
-            return not (await cls._load_model(port, model))[1]
-
+            _, error = await cls._load_model(port, model)
+            return error
+        
         return True
