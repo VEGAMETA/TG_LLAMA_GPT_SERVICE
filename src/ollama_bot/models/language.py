@@ -8,7 +8,7 @@ columns = defaultdict(list)
 try:
     file = open('./src/resources/languages.csv', encoding="utf-8")
 except FileNotFoundError:
-    file = open('resources/languages.csv', encoding="utf-8")
+    file = open('../src/resources/languages.csv', encoding="utf-8")
 finally:
     reader = csv.DictReader(file,  delimiter=";")
     for row in reader:

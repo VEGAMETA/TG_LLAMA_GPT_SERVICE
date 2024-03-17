@@ -1,6 +1,6 @@
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import Boolean, Column, Integer, String, SMALLINT, ARRAY, update
+from sqlalchemy import Boolean, Column, Integer, String, SMALLINT, ARRAY, ForeignKey
 from sqlalchemy.engine.row import Row
 
 from loader import db
@@ -17,7 +17,7 @@ class User(Base):
     context = Column(ARRAY(Integer), default=[])
     model = Column(String, default=next(iter(models)))
     language = Column(String, default=Languages.EN.name)
-    server_id = Column(SMALLINT, default=0)
+    container_id = Column(SMALLINT, ForeignKey("containers.id"), default=0)
     permission = Column(SMALLINT, default=0)
     processing = Column(Boolean, default=False)
 
