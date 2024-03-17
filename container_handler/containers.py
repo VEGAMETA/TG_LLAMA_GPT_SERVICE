@@ -1,6 +1,7 @@
 import logging
 import asyncio
 from asyncio.subprocess import PIPE
+
 from src.project_config import config
 
 
@@ -42,7 +43,7 @@ class ContainerHandler:
                 'tg_llama_gpt_service_tg_bot_network',
                 '-v',
                 'tg_llama_gpt_service_llm-service:/root/.ollama',
-                'ollama/ollama:0.1.27',  # 0.1.29
+                'ollama/ollama:0.1.29',
             ))[1]
         elif config.get('GPU').casefold() == 'amd':
             return not (await cls.run(
@@ -61,7 +62,7 @@ class ContainerHandler:
                 'tg_llama_gpt_service_tg_bot_network',
                 '-v',
                 'tg_llama_gpt_service_llm-service:/root/.ollama',
-                'ollama/ollama:0.1.29:rocm',
+                'ollama/ollama:0.1.29-rocm',
             ))[1]
 
     @classmethod
@@ -95,7 +96,8 @@ class ContainerHandler:
             return False
 
         if "is not running" in error.decode():
-            logging.info(f"Container ollama{port} is not running trying to start it")
+            logging.info(
+                f"Container ollama{port} is not running trying to start it")
             if not await cls.start_container(port):
                 return False
             _, error = await cls._load_model(port, model)

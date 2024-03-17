@@ -1,10 +1,19 @@
 import logging
-from src.ollama_bot.misc.yaml_parser import parse_yaml_lines
 
-with open('config.yml') as f:
-    lines = f.readlines()
+try:
+    from src.ollama_bot.misc.yaml_parser import parse_yaml
+except ModuleNotFoundError:
+    from ollama_bot.misc.yaml_parser import parse_yaml
 
-config = parse_yaml_lines(lines)
+try:
+    file = open('./config.yml')
+except FileNotFoundError as _:
+    file = open('/www/config.yml')
+finally:
+    lines = file.readlines()
+    file.close()
+
+config = parse_yaml(lines)
 for key, value in config.items():
     if value == "False":
         config[key] = False

@@ -4,6 +4,6 @@ cd src
 
 alembic upgrade heads
 
-cd ..
+cd /www
 
 python ./src/bot.py

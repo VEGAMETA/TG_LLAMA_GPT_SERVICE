@@ -1,8 +1,15 @@
 # TG_LLAMA_GPT_SERVICE
 
-Telegram bot based on ollama service integration.
+#### Telegram bot based on ollama service integration.
 
-This project is using Aiogram, Postgres and Ollama
+### This project is using
+- Aiogram
+- Postgres (Sqlalchemy + alembic)
+- Ollama
+
+### Requirements:
+- Docker
+- python >= 3.8
 
 ---
 
@@ -18,27 +25,18 @@ git clone https://github.com/VEGAMETA/TG_LLAMA_GPT_SERVICE.git
 cd TG_LLAMA_GPT_SERVICE
 ```
 
-### Docker
-Build image
+### Run python startup script
 ```bash
-docker-compose build
+python startup.py
 ```
 
-Run service
-```bash
-docker-compose up
-```
+## Settings
 
-You can read little [docker manual](https://hub.docker.com/r/ollama/ollama) for ollama to set up your drivers. You can also  change your GPU (by now linux only supports AMD) or use CPU at
-config.yml and feel free to modify models section but prepare 
-to wait a lot until required models downloaded.
+Specify the desired model(s) in the `config.yml`. You can use any [availible model](https://ollama.com/library). Also you can change your GPU (by now ollama provides AMD support for linux only) or use CPU Don't forget to set up yout drivers (you can read [small guide](https://hub.docker.com/r/ollama/ollama) on the ollama's docker page). Be prepared to wait a while until required models are pulled.
 
-Stop service
-```bash
-docker-compose down
-```
+---
 
-Remove invalid images 
-```bash
-docker rmi -f $(docker images -f "dangling=true" -q)
+##### If you are using Windows and just removed huge model don't forget to optimize your disc image.
+```powershell
+Optimize-VHD -Path "P:\path\to\your\DockerDesktop\vhdx\DockerDesktopWSL\data\ext4.vhdx"
 ```

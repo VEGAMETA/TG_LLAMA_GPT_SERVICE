@@ -1,14 +1,14 @@
-def parse_yaml_lines(lines, indent_level=0):
+def parse_yaml(lines, indent_level=0):
     result = {}
     key = None
     value = None
 
-    for n, line in enumerate(lines):        
+    for n, line in enumerate(lines):
         if not line or line.startswith('#'):
             continue
 
         cur_indent = 0
-        
+
         for char in line:
             if char != ' ':
                 break
@@ -30,7 +30,7 @@ def parse_yaml_lines(lines, indent_level=0):
                 raise ValueError("Invalid YAML format")
             if key not in result:
                 result[key] = {}
-            sub_result = parse_yaml_lines(lines[n:], indent_level=cur_indent)
+            sub_result = parse_yaml(lines[n:], indent_level=cur_indent)
             result[key].update(sub_result)
 
     return result
