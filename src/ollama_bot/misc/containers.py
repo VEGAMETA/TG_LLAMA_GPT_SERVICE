@@ -48,6 +48,7 @@ async def get_container_port(session: AsyncSession, model: str) -> int:
     Returns container.
     """
     while True:
+        session.expire_all()
         query = select(Container).filter(Container.operating == False)
         container = (await session.execute(query)).scalar()
         if container:

@@ -35,7 +35,7 @@ class ModelPuller():
             container, 
             stdout=DEVNULL,
         )
-        if error:
+        if b'Pull complete' not in error:
             logging.error(f'Could not create puller - {error}')
         else:
             logging.info('Pulling models...')
