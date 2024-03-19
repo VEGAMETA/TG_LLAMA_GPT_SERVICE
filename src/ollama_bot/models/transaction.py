@@ -1,13 +1,7 @@
-import uuid
 import enum
 from datetime import datetime, timedelta
+from sqlalchemy import func, Column, ForeignKey, Integer, SmallInteger, DateTime, UUID
 
-from sqlalchemy.engine.row import Row
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import ForeignKey, Column, Integer, DateTime, SMALLINT
-
-from loader import db
 from ollama_bot.models.base import Base
 
 
@@ -28,42 +22,8 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(Integer, autoincrement=True)
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(Integer, ForeignKey("users.user_id"))
-    time = Column(DateTime, default=datetime.now())
-    state = Column(SMALLINT, default=TransactionState.PENDING.value)
+    uuid = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    time= Column(DateTime, server_default=func.now())
+    state = Column(SmallInteger, default=TransactionState.PENDING.value)
     expire_time = Column(DateTime, default=datetime.now() + timedelta(minutes=30))
-
-    @staticmethod
-    @db.with_session
-    async def create_transaction(session: AsyncSession, user_id: int) -> UUID:
-        """
-        Creates new transaction and returns uuid.
-        """
-        transaction = Transaction(user_id=user_id)
-        session.add(transaction)
-        return transaction.uuid
-
-    @classmethod
-    @db.with_session_no_commit_method
-    async def get_transactions_by_user_id(cls, session: AsyncSession, user_id: int) -> list['Transaction']:
-        """
-        Returns list of transactions by user id.
-        """
-        table = cls.__table__
-        query = table.select().where(table.c.user_id == user_id)
-        result = await session.execute(query)
-        transactions = [row for row in result]
-        return transactions
-
-    @classmethod
-    @db.with_session_no_commit_method
-    async def get_transaction_by_uuid(cls, session: AsyncSession, uuid: UUID) -> Row:
-        """
-        Returns transaction by given uuid.
-        """
-        table = cls.__table__
-        query = table.__table__.select().where(table.c.uuid == uuid)
-        result = await session.execute(query)
-        transaction = result.first()
-        return transaction

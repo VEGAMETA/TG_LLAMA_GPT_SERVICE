@@ -1,0 +1,8 @@
+CPU: False
+GPU: NVIDIA
+CONTAINER_HANDLER_SERVER_PORT: 11433
+
+Models:
+  LLAMA2_TEST: llama2
+  MIXTRAL: dolphin-mixtral:v2.7
+  CODE_BOOGA: codebooga:34b-v0.1-q4_0

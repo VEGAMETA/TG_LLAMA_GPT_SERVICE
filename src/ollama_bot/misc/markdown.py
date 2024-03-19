@@ -30,6 +30,17 @@ def _replace_all(text, pattern, function):
     new_list = [item for pair in zip(originstr, strlist) for item in pair]
     return ''.join(new_list)
 
+def escapeshape(text):
+    return '▎*' + text.split()[1] + '*'
+
+def escapeminus(text):
+    return '\\' + text
+
+def escapebackquote(text):
+    return r'\`\`'
+
+def escapeplus(text):
+    return '\\' + text
 
 async def escape(text, flag=0):
     """
@@ -59,12 +70,12 @@ async def escape(text, flag=0):
     text = re.sub(r"\@{3}(.*?)\@{3}\^{3}(.*?)\^{3}", '[\\1](\\2)', text)
     text = re.sub(r"~", '\~', text)
     text = re.sub(r">", '\>', text)
-    text = _replace_all(text, r"(^#+\s.+?$)|```[\D\d\s]+?```", '▎*' + text.split()[1] + '*')
+    text = _replace_all(text, r"(^#+\s.+?$)|```[\D\d\s]+?```", escapeshape)
     text = re.sub(r"#", '\#', text)
-    text = _replace_all(text, r"(\+)|\n[\s]*-\s|```[\D\d\s]+?```|`[\D\d\s]*?`", '\\' + text)
+    text = _replace_all(text, r"(\+)|\n[\s]*-\s|```[\D\d\s]+?```|`[\D\d\s]*?`", escapeplus)
     text = re.sub(r"\n{1,2}(\s*)-\s", '\n\n\\1• ', text)
     text = re.sub(r"\n{1,2}(\s*\d{1,2}\.\s)", '\n\n\\1', text)
-    text = _replace_all(text, r"(-)|\n[\s]*-\s|```[\D\d\s]+?```|`[\D\d\s]*?`", '\\' + text)
+    text = _replace_all(text, r"(-)|\n[\s]*-\s|```[\D\d\s]+?```|`[\D\d\s]*?`", escapeminus)
     text = re.sub(r"```([\D\d\s]+?)```", '@@@\\1@@@', text)
 
     triples = text.count("```") % 2

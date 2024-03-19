@@ -1,4 +1,4 @@
-from ollama_bot.models.language import Languages
+from ollama_bot.misc.language import Languages
 
 commands_f: str = "\n".join((
     "",

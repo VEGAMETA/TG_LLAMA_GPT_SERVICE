@@ -5,51 +5,50 @@ import asyncio
 import aiohttp
 import aiogram.exceptions
 import aiohttp.client_exceptions
-
-from aiogram import F
+from aiogram import F, Router
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from loader import dp
-from ollama_bot.misc.gpt import Models
-from ollama_bot.models.language import Languages
-from ollama_bot.states.user import UserState
-from ollama_bot.misc.commands import commands
+from project_config import models
 from ollama_bot.models.user import User
 from ollama_bot.misc.markdown import escape
+from ollama_bot.states.user import UserState
+from ollama_bot.misc.commands import commands
+from ollama_bot.misc.language import get_language
+from ollama_bot.misc.containers import get_container_port, unoperate
 
-special_chars = (
-    '_', '*', '[', ']', '(', ')', '~', '`', ',',
-    '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'
-)
+router = Router(name="gpt-commands-router")
 
 
-@dp.message(Command("stop"))
-@dp.message(F.text.in_(commands.get("command_stop")))
-async def stop_handler(message: Message) -> None:
+@router.message(Command("stop"))
+@router.message(F.text.in_(commands.get("command_stop")))
+async def stop_handler(message: Message, session: AsyncSession) -> None:
     """
     Request for gpt to stop answering
     """
-    await User.set_processing(message.from_user.id, False)
+    user = await session.get(User, message.from_user.id)
+    user.processing = False
+    await session.commit()
 
 
-@dp.message(Command("clear"))
-@dp.message(F.text.in_(commands.get("command_clear")))
-async def clear_handler(message: Message) -> None:
+@router.message(Command("clear"))
+@router.message(F.text.in_(commands.get("command_clear")))
+async def clear_handler(message: Message, session: AsyncSession) -> None:
     """
     Clears the context for user gpt request
     """
-    user_id = message.from_user.id
-    user = await User.get_user_by_id(message.from_user.id)
-    await User.set_context(user_id, [])
-    language = await Languages.get_dict_by_name(user.language)
+    user = await session.get(User, message.from_user.id)
+    user.context = []
+    await session.commit()
+    language = await get_language(user.language)
     answer = language.get('clear')
     await message.answer(answer)
 
 
-@dp.message(F.text)
-async def gpt_handler(message: Message, state: FSMContext) -> None:
+@router.message(F.text)
+async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession) -> None:
     """
     This handler manage ollama gpt api calls with streaming and editing message for it.
     """
@@ -58,34 +57,39 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
         return
 
     user_id: int = message.from_user.id
-    user = await User.get_user_by_id(user_id)
+    user = await session.get(User, user_id)
     if not user:
-        await User.create_user(user_id)
-        user = await User.get_user_by_id(user_id)
+        await session.merge(User(user_id=user_id))
+        await session.commit()
+    user = await session.get(User, user_id)
 
-    language = await Languages.get_dict_by_name(user.language)
+    language = await get_language(user.language)
 
     if user.processing:
         answering = language.get('answering')
         await message.answer(answering)
         return
 
-    await User.set_processing(user_id, True)
+    user.processing = True
+    await session.commit()
     bot_message = await message.answer('•••', parse_mode="MarkdownV2")
     network_error = False
     bot_message_time = time.monotonic()
     answer = ''
     data = {
         "prompt": message.text,
-        "model": Models.get_model_by_name(user.model),
+        "model": models[user.model],
         "context": user.context,
     }
 
+    port = await get_container_port(session, user.model)
+
     not_escaped_answer = ''
-    
+
     try:
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60*15)) as session:
-            async with session.post('http://host.docker.internal:11434/api/generate', json=data) as response:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60*15)) as client_session:
+            from loader import config
+            async with client_session.post(f'http://{config.db.host}:{port}/api/generate', json=data) as response:
                 async for chunk in response.content.iter_chunks():
                     try:
                         if not isinstance(chunk, tuple):
@@ -94,7 +98,10 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                             return
 
                         # User's stop request handler
-                        if not await User.get_processing(user_id):
+                        await session.refresh(user)
+                        user = await session.get(User, user_id)
+                        processing = user.processing
+                        if not processing:
                             error = language.get("stopped")
                             await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
                             return
@@ -109,7 +116,8 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                         if resp_json.get("done"):
                             await bot_message.edit_text(answer, parse_mode="MarkdownV2")
                             context = resp_json.get("context")
-                            await User.set_context(user_id, context)
+                            user.context = context
+                            await session.commit()
                             return
 
                         # Delay editing to avoid api requests excesses
@@ -135,7 +143,7 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
                             await bot_message.edit_text(not_escaped_answer)
                             bot_message_time = time.monotonic()
                             continue
-                        
+
                     # Simple retry after error handler (waiting)
                     except aiogram.exceptions.TelegramRetryAfter as e:
                         logging.error(e)
@@ -163,4 +171,6 @@ async def gpt_handler(message: Message, state: FSMContext) -> None:
         await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
 
     finally:
-        await User.set_processing(user_id, False)
+        await unoperate(session, port)
+        user.processing = False
+        await session.commit()
