@@ -11,13 +11,13 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ollama_bot.misc.containers import get_container_port
 from project_config import models
-from ollama_bot.misc.language import get_language
-from ollama_bot.states.user import UserState
-from ollama_bot.misc.commands import commands
 from ollama_bot.models.user import User
 from ollama_bot.misc.markdown import escape
+from ollama_bot.states.user import UserState
+from ollama_bot.misc.commands import commands
+from ollama_bot.misc.language import get_language
+from ollama_bot.misc.containers import get_container_port, unoperate
 
 router = Router(name="gpt-commands-router")
 
@@ -171,5 +171,6 @@ async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession
         await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
 
     finally:
+        await unoperate(session, port)
         user.processing = False
         await session.commit()

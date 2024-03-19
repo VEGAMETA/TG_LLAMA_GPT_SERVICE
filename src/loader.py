@@ -13,6 +13,7 @@ from sqlalchemy import delete, update, select
 import project_config
 from ollama_bot.models.base import Base
 from ollama_bot.models.container import Container
+from ollama_bot.models.user import User
 from ollama_bot.config import load_config
 from ollama_bot.middlwares.database import DbSessionMiddleware
 from ollama_bot.handlers import default, language, models, subscription, gpt
@@ -60,7 +61,6 @@ async def init_tables() -> None:
             await session.flush()
 
 async def fix_users_processing(session: AsyncSession) -> None:
-    from ollama_bot.models.user import User
     users = (await session.execute(select(User).filter(User.processing == True))).fetchall()
     for user in users:
         user[0].processing = False

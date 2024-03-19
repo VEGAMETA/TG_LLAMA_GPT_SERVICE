@@ -1,10 +1,9 @@
 import asyncio
-from datetime import datetime, timedelta
 import aiohttp
 import logging
-import threading
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from datetime import datetime, timedelta
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from project_config import config
 from ollama_bot.models.container import Container
@@ -17,7 +16,7 @@ async def add_container(session: AsyncSession, port: int) -> None:
     """
     Add container.
     """
-    await session.merge(Container(port=port))
+    await session.merge(Container(port=port, operating=False))
 
 async def wait_for_suspend(port: int) -> None:
     """
@@ -71,7 +70,7 @@ async def get_free_port(session: AsyncSession, model: str) -> int:
     """
     while True:
         session.expire_all()
-        ports = {container.port for container in (await session.execute(select(Container))).fetchall()}
+        ports = {container[0].port for container in (await session.execute(select(Container))).fetchall()}
         reserved_ports = ports.union(blocked_ports)
         free_port = None
         for port in range(11435, 65535):
@@ -101,6 +100,10 @@ async def create_container(port: int, model: str) -> bool:
             logging.error(await response.text())
             return False
 
+async def unoperate(session: AsyncSession, port: int):
+    query = select(Container).filter(Container.port == port)
+    container = (await session.execute(query)).scalar()
+    container.operating = False
 
 async def delete_container(port):
     """
