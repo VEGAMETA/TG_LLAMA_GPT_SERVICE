@@ -1,8 +1,6 @@
 import asyncio
-from ollama_bot.models import User, Transaction
-from loader import bot, dp, db
+from loader import bot, dp, init_tables
 from aiogram.types.bot_command import BotCommand
-from ollama_bot.handlers import default, language, models, subscription, gpt
 
 
 async def set_commands():
@@ -19,14 +17,13 @@ async def set_commands():
 
 
 async def main() -> None:
+    await init_tables()
     await set_commands()
-    # await db.migrate() no need (alembic is using)
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 if __name__ == "__main__":
     try:
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(main())
+        asyncio.run(main())
     except KeyboardInterrupt as _:
         ...

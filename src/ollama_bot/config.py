@@ -28,7 +28,7 @@ def load_config() -> Config:
             token=os.getenv('BOT_TOKEN', 'token'),
         ),
         db=DbConfig(
-            host=os.getenv('DB_HOST', 'host.docker.internal'),
+            host=os.getenv('DB_HOST', 'localhost'),
             password=os.getenv('DB_PASSWORD', 'password'),
             user=os.getenv('DB_USER', 'postgres'),
             database=os.getenv('DB_NAME', 'telegram'),

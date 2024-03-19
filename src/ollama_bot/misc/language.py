@@ -1,5 +1,5 @@
-import enum
 import csv
+import enum
 import logging
 from collections import defaultdict
 
@@ -32,7 +32,6 @@ class Languages(enum.Enum):
     """
     Languages enum.
     """
-
     EN: Language = Language(
         name="English",
         flag="🇬🇧/🇺🇸",
@@ -44,14 +43,14 @@ class Languages(enum.Enum):
         dictionary=dict(zip(columns.get("Instance"), columns.get("Russian")))
     )
 
-    @classmethod
-    async def get_dict_by_name(cls, name: str) -> "Language":
-        """
-        Returns dictionary by given name.
-        """
-        for language in cls:
-            if language.name == name:
-                return language.value.dictionary
-        else:
-            logging.warning("Language not found")
-            return cls.EN.value.dictionary
+
+async def get_language(name: str) -> "Language":
+    """
+    Returns dictionary by given name.
+    """
+    for language in Languages:
+        if language.name == name:
+            return language.value.dictionary
+    else:
+        logging.warning("Language not found")
+        return Languages.EN.value.dictionary

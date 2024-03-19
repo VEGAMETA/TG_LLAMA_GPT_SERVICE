@@ -31,6 +31,10 @@ class Server:
         params = {k: v[0] for k, v in urllib.parse.parse_qs(parsed.query).items()}
 
         match parsed.path:
+            case '/get_containers':
+                response, status_code = await self.get_containers()
+            case '/start_containers':
+                response, status_code = await self.start_containers()
             case '/create_container':
                 response, status_code = await self.create_container(params)
             case '/start_container':
@@ -55,6 +59,20 @@ class Server:
         await writer.drain()
         writer.close()
         await writer.wait_closed()
+
+    async def get_containers(self) -> tuple[str, int]:
+        ports = await ContainerHandler.get_containers()
+        if not ports:
+            return "No containers found", 404
+        return ports, 200
+
+    async def start_containers(self) -> tuple[str, int]:
+        ports = await ContainerHandler.get_containers()
+        if not ports:
+            return "No containers found", 404
+        for port in ports.split('\n'):
+            await ContainerHandler.start_container(port)
+        return ports, 200
 
     async def create_container(self, params) -> tuple[str, int]:
         if not {'port', 'model'}.issubset(params):
@@ -135,4 +153,4 @@ class Server:
         if not await ContainerHandler.delete_container(port):
             return "Failed to delete container", 500
 
-        return f"Deleting container at port {port}", 200  # Maybe 204
+        return f"Deleting container at port {port}", 204

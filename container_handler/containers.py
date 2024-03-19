@@ -24,6 +24,8 @@ class ContainerHandler:
                 f'ollama{port}',
                 '-p',
                 f'{port}:11434',
+                '-v',
+                'tg_llama_gpt_service_llm-service:/root/.ollama',
                 '--network',
                 'tg_llama_gpt_service_tg_bot_network',
                 'ollama/ollama:0.1.29',
@@ -75,6 +77,20 @@ class ContainerHandler:
             'run',
             f'{model}'
         )
+    
+    @classmethod
+    async def get_containers(cls) -> list[str]:
+        out, _ = await cls.run(
+            'docker',
+            'ps',
+            '-a',
+            '--filter',
+            'name=ollama\d+$',
+            '--format',
+            '{{.Names}}'
+        )
+        ports = map(lambda line: line.lstrip('ollama'), out.decode().split('\n'))
+        return '\n'.join(list(ports))
 
     @classmethod
     async def start_container(cls, port: int) -> bool:

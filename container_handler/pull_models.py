@@ -27,7 +27,7 @@ class ModelPuller():
             'run',
             '-d',
             '-p',
-            '11435:11434',
+            '11432:11434',
             '-v',
             'tg_llama_gpt_service_llm-service:/root/.ollama',
             '--name',
@@ -51,8 +51,6 @@ class ModelPuller():
             models.get(model),
             stdout=DEVNULL,
         )
-        if b'open //./pipe/docker_engine' in error:
-            return logging.error("Please run docker desktop")
         if b'success' not in error:
             logging.error(f'Could not pull model {model}') 
             if b'file does not exist' in error:
