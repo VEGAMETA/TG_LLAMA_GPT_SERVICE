@@ -37,7 +37,7 @@ class Composer():
             'build',
             stdout=DEVNULL
         )
-        if not ("file has already been closed" in error.decode()):
+        if  error and b'file has already been closed' not in error:
             logging.error(f"Could not build containers - {error.decode()}")
         else:
             logging.info("All Containers are built")
@@ -50,9 +50,9 @@ class Composer():
             '-d',
             stdout=DEVNULL
         )
-        if ("postgres  Started" in error.decode()
-                or "postgres  Running" in error.decode())\
-                and "python  Started" in error.decode():
+        if (b'postgres  Started' in error
+                or b'postgres  Running' in error)\
+                and b'python  Started' in error:
             logging.info("All Containers are started")
         else:
             logging.error(f"Could not start containers - {error.decode()}")

@@ -18,6 +18,7 @@ async def add_container(session: AsyncSession, port: int) -> None:
     """
     await session.merge(Container(port=port, operating=False))
 
+
 async def wait_for_suspend(port: int) -> None:
     """
     Wait for suspend.
@@ -28,11 +29,14 @@ async def wait_for_suspend(port: int) -> None:
             while True:
                 query = select(Container).filter(Container.port == port)
                 container = (await session.execute(query)).scalar()
-                sleeptime = datetime.now() - container.last_activity_time + timedelta(minutes=30)
-                sleeptime = sleeptime.total_seconds()
+                future_time = container.last_activity_time + timedelta(minutes=30)
+                logging.warning(future_time)
+                sleeptime = (datetime.now() - future_time).total_seconds()
+                logging.warning(sleeptime)
                 while sleeptime > 0:
                     await asyncio.sleep(sleeptime)
                 else:
+                    await session.refresh(container)
                     if not container.operating:
                         await delete_container(port)
                         await session.delete(container)
@@ -53,7 +57,9 @@ async def get_container_port(session: AsyncSession, model: str) -> int:
         container = (await session.execute(query)).scalar()
         if container:
             container.operating = True
+            container.last_activity_time = datetime.now()
             await session.commit()
+            asyncio.gather(wait_for_suspend(container.port))
             return container.port
         port = await get_free_port(session, model)
         if port:
@@ -101,10 +107,12 @@ async def create_container(port: int, model: str) -> bool:
             logging.error(await response.text())
             return False
 
+
 async def unoperate(session: AsyncSession, port: int):
     query = select(Container).filter(Container.port == port)
     container = (await session.execute(query)).scalar()
     container.operating = False
+
 
 async def delete_container(port):
     """

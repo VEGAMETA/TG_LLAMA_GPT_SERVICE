@@ -32,10 +32,10 @@ class ModelPuller():
             'tg_llama_gpt_service_llm-service:/root/.ollama',
             '--name',
             f'ollama{self.name}',
-            container, 
+            container,
             stdout=DEVNULL,
         )
-        if b'Pull complete' not in error:
+        if error and b'Pull complete' not in error:
             logging.error(f'Could not create puller - {error}')
         else:
             logging.info('Pulling models...')
@@ -51,8 +51,8 @@ class ModelPuller():
             models.get(model),
             stdout=DEVNULL,
         )
-        if b'success' not in error:
-            logging.error(f'Could not pull model {model}') 
+        if error and b'success' not in error:
+            logging.error(f'Could not pull model {model}')
             if b'file does not exist' in error:
                 logging.error(f'file {models.get(model)} does not exist')
                 return models.pop(model)

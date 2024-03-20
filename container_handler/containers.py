@@ -93,6 +93,19 @@ class ContainerHandler:
         return '\n'.join(list(ports))
 
     @classmethod
+    async def check_container(cls, port: int) -> bool:
+        out, _ = await cls.run(
+            'docker',
+            'ps',
+            '-a',
+            '--filter',
+            f'name=ollama{port}$',
+            '--format',
+            '{{.Names}}'
+        )
+        return bool(out)
+    
+    @classmethod
     async def start_container(cls, port: int) -> bool:
         return not (await cls.run('docker', 'start', f'ollama{port}'))[1]
 

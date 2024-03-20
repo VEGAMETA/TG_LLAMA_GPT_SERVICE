@@ -35,6 +35,8 @@ class Server:
                 response, status_code = await self.get_containers()
             case '/start_containers':
                 response, status_code = await self.start_containers()
+            case '/check_container':
+                response, status_code = await self.check_container(params)
             case '/create_container':
                 response, status_code = await self.create_container(params)
             case '/start_container':
@@ -73,6 +75,27 @@ class Server:
         for port in ports.split('\n'):
             await ContainerHandler.start_container(port)
         return ports, 200
+
+    async def check_container(self, params) -> tuple[str, int]:
+        if 'port' not in params:
+            return "Invalid request, port parameter is required", 400
+
+        port = params.get('port')
+
+        try:
+            port = int(port)
+        except ValueError:
+            return "Invalid request, port must be an integer", 400
+
+        if port not in range(1025, 65536):
+            return "Invalid request, port must be between 1025 and 65535", 400
+        
+        if not await ContainerHandler.check_container(port):
+            return "Container is not running", 404
+        
+        ContainerHandler.start_container(port)
+        
+        return "Container is running", 200
 
     async def create_container(self, params) -> tuple[str, int]:
         if not {'port', 'model'}.issubset(params):
