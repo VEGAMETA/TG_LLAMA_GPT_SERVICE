@@ -70,7 +70,6 @@ async def escape(text, flag=0):
     text = re.sub(r"\@{3}(.*?)\@{3}\^{3}(.*?)\^{3}", '[\\1](\\2)', text)
     text = re.sub(r"~", '\~', text)
     text = re.sub(r">", '\>', text)
-    text = re.sub(r",", '\,', text)
     text = _replace_all(text, r"(^#+\s.+?$)|```[\D\d\s]+?```", escapeshape)
     text = re.sub(r"#", '\#', text)
     text = _replace_all(text, r"(\+)|\n[\s]*-\s|```[\D\d\s]+?```|`[\D\d\s]*?`", escapeplus)
@@ -99,4 +98,5 @@ async def escape(text, flag=0):
     text = re.sub(r"}", '\}', text)
     text = re.sub(r"\.", '\.', text)
     text = re.sub(r"!", '\!', text)
+    text = text[:-1] if text[-1] == "," else text
     return text

@@ -28,7 +28,8 @@ class Server:
         data = await reader.read(_DEFAULT_LIMIT)
         message = data.decode()
         parsed = urllib.parse.urlparse(message.split('\n')[0].split(' ')[1])
-        params = {k: v[0] for k, v in urllib.parse.parse_qs(parsed.query).items()}
+        params = {k: v[0]
+                  for k, v in urllib.parse.parse_qs(parsed.query).items()}
 
         match parsed.path:
             case '/get_containers':
@@ -89,12 +90,12 @@ class Server:
 
         if port not in range(1025, 65536):
             return "Invalid request, port must be between 1025 and 65535", 400
-        
+
         if not await ContainerHandler.check_container(port):
             return "Container is not running", 404
-        
+
         ContainerHandler.start_container(port)
-        
+
         return "Container is running", 200
 
     async def create_container(self, params) -> tuple[str, int]:
