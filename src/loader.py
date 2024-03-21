@@ -71,7 +71,7 @@ async def create_containers(session: AsyncSession) -> None:
     async with aiohttp.ClientSession() as client_session:
         async with client_session.get(f"http://{config.db.host}:{port}/get_containers") as response:
             if response.status == 200:
-                ports = (await response.text()).strip().split('\n')
+                ports.extend((await response.text()).strip().split('\n'))
         async with client_session.get(f"http://{config.db.host}:{port}/start_containers") as response:
             if response.status == 200:
                 logging.info(f"Containers started")

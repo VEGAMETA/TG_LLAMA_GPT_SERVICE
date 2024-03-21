@@ -6,7 +6,7 @@ except ModuleNotFoundError:
     from ollama_bot.misc.yaml_parser import parse_yaml
 
 try:
-    file = open('config.yml')
+    file = open('./config.yml')
 except FileNotFoundError as _:
     file = open('../config.yml')
 finally:
