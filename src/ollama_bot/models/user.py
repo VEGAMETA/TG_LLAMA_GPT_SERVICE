@@ -1,13 +1,15 @@
+from __future__ import annotations
+
+from typing import Set
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy import (
     Column,
-    ForeignKey,
     Boolean,
     Integer,
     SmallInteger,
     BigInteger,
     String,
-    UUID
 )
 
 from project_config import models
@@ -25,5 +27,4 @@ class User(Base):
     language = Column(String, default=Languages.EN.name)
     permission = Column(SmallInteger, default=0)
     processing = Column(Boolean, default=False)
-    transactions_ids = Column(ARRAY(Integer), default=[])
-    container_id = Column(UUID(as_uuid=True), ForeignKey("containers.id"), default=None)
+    transactions: Mapped[Set["Transaction"]] = relationship(back_populates="user")

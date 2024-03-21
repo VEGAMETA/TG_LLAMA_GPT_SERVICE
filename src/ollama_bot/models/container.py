@@ -6,7 +6,7 @@ from ollama_bot.models.base import Base
 class Container(Base):
     __tablename__ = "containers"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(UUID(as_uuid=True), server_default=func.gen_random_uuid())
     operating = Column(Boolean, default=False)
     last_activity_time = Column(DateTime, server_default=func.now())
-    port = Column(Integer)
+    port = Column(Integer, primary_key=True)

@@ -20,7 +20,7 @@ async def main() -> None:
 
     await composer.start()
     await asyncio.gather(
-        server.start(),
+        server._start(),
         puller.start(),
     )
 

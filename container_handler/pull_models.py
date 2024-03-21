@@ -1,8 +1,8 @@
-import logging
 import asyncio
+import logging
 from asyncio.subprocess import DEVNULL
-
 from src.project_config import config, models
+from container_handler.commands import Commands
 from container_handler.containers import ContainerHandler
 
 
@@ -14,54 +14,31 @@ class ModelPuller():
     async def start(self) -> None:
         await self.suspend_puller()
         await self.create_puller()
-        await self.pull_models()
+        await asyncio.gather(*[self.pull_model(model) for model in self.models])
         logging.info('Pulling completed' if await self.suspend_puller() else 'Could not delete puller')
         logging.info('Everything is set up and ready')
 
     async def create_puller(self) -> None:
-        container = 'ollama/ollama:0.1.29'
-        if config.get('GPU').casefold() == 'amd':
-            container += '-rocm'
-        _, error = await ContainerHandler.run(
-            'docker',
-            'run',
-            '-d',
-            '-p',
-            '11432:11434',
-            '-v',
-            'tg_llama_gpt_service_llm-service:/root/.ollama',
-            '--name',
-            f'ollama{self.name}',
-            container,
-            stdout=DEVNULL,
-        )
+        container = "ollama/ollama:0.1.29"
+        container += "-rocm" if config.get('GPU').casefold() == "amd" else ""
+        _, error = await ContainerHandler.run(*Commands.run_puller(self.name), container, stdout=DEVNULL)
         if error and b'Pull complete' not in error:
             logging.error(f'Could not create puller - {error}')
         else:
             logging.info('Pulling models...')
 
-    async def pull_model(self, model) -> None:
+    async def pull_model(self, model_name) -> None:
+        model = models.get(model_name)
         logging.info(f'Pulling {model}...')
-        _, error = await ContainerHandler.run(
-            'docker',
-            'exec',
-            f'ollama{self.name}',
-            'ollama',
-            'pull',
-            models.get(model),
-            stdout=DEVNULL,
-        )
+        _, error = await ContainerHandler.run(*Commands.pull(self.name), model, stdout=DEVNULL)
         if error and b'success' not in error:
             logging.error(f'Could not pull model {model}')
             if b'file does not exist' in error:
-                logging.error(f'file {models.get(model)} does not exist')
-                return models.pop(model)
+                logging.error(f'file {model} does not exist')
+                return models.pop(model_name)
             logging.error(error.decode())
         else:
             logging.info(f'Pulled {model}')
-
-    async def pull_models(self) -> None:
-        await asyncio.gather(*[self.pull_model(model) for model in self.models])
 
     async def suspend_puller(self) -> None:
         return await ContainerHandler.delete_container(self.name)

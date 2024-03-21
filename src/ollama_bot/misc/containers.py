@@ -26,26 +26,21 @@ async def wait_for_suspend(port: int) -> None:
     from loader import sessionmaker
     async with sessionmaker() as session:
         async with session.begin():
+            container = await session.get(Container, port)
             while True:
-                query = select(Container).filter(Container.port == port)
-                container = (await session.execute(query)).scalar()
-                future_time = container.last_activity_time + timedelta(minutes=30)
-                logging.warning(future_time)
-                sleeptime = (datetime.now() - future_time).total_seconds()
-                logging.warning(sleeptime)
+                sleeptime = 1
                 while sleeptime > 0:
-                    await asyncio.sleep(sleeptime)
-                else:
+                    future_time = container.last_activity_time + timedelta(minutes=30)
+                    sleeptime = (future_time - datetime.now()).total_seconds()
+                    await asyncio.sleep(round(sleeptime) + 1)
                     await session.refresh(container)
-                    if not container.operating:
-                        await delete_container(port)
-                        await session.delete(container)
-                        await session.commit()
-                        return
-                    container.last_activity_time = datetime.now()
+                if not container.operating:
+                    await delete_container(port)
+                    await session.delete(container)
                     await session.commit()
-                await session.refresh(container)
-
+                    return
+                container.last_activity_time = datetime.now()
+                await session.commit()
 
 async def get_container_port(session: AsyncSession, model: str) -> int:
     """
@@ -109,8 +104,7 @@ async def create_container(port: int, model: str) -> bool:
 
 
 async def unoperate(session: AsyncSession, port: int):
-    query = select(Container).filter(Container.port == port)
-    container = (await session.execute(query)).scalar()
+    container = await session.get(Container, port)
     container.operating = False
 
 

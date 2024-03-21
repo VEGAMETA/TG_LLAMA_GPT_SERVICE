@@ -9,6 +9,7 @@ from aiogram import F, Router
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from project_config import models
@@ -83,9 +84,9 @@ async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession
     }
 
     port = await get_container_port(session, user.model)
-
+    response = ''
     not_escaped_answer = ''
-
+    raw_message = b''
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60*15)) as client_session:
             from loader import config
@@ -96,18 +97,16 @@ async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession
                             error = language.get("error_empty")
                             await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
                             return
+                        
+                        raw_message += chunk[0]
+                        if not chunk[1]:
+                            continue
+                        
+                        resp_json = json.loads(raw_message.decode())
 
-                        # User's stop request handler
-                        await session.refresh(user)
-                        user = await session.get(User, user_id)
-                        processing = user.processing
-                        if not processing:
-                            error = language.get("stopped")
-                            await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
-                            return
+                        raw_message = b''
 
                         # Getting response and formatting
-                        resp_json = json.loads(chunk[0].decode("utf-8"))
                         response = resp_json.get("response")
                         not_escaped_answer += response
                         answer = await escape(not_escaped_answer)
@@ -120,12 +119,18 @@ async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession
                             await session.commit()
                             return
 
+                        await session.refresh(user)
+                        if not user.processing:
+                            error = language.get("stopped")
+                            await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
+                            return
+
                         # Delay editing to avoid api requests excesses
                         if time.monotonic() - bot_message_time > 3:
                             await bot_message.edit_text(answer, parse_mode="MarkdownV2")
                             bot_message_time = time.monotonic()
 
-                    # Json error handler (ignore?)
+                    # Json error handler
                     except json.decoder.JSONDecodeError as e:
                         logging.error(e)
                         await bot_message.edit_text(answer)

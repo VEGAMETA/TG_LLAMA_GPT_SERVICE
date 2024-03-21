@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import enum
 from datetime import datetime, timedelta
-from sqlalchemy import func, Column, ForeignKey, Integer, SmallInteger, DateTime, UUID
+from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy import func, Column, Integer, SmallInteger, DateTime, UUID, ForeignKey
 
 from ollama_bot.models.base import Base
 
@@ -23,7 +26,8 @@ class Transaction(Base):
 
     id = Column(Integer, autoincrement=True)
     uuid = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.user_id'))
+    user: Mapped["User"] = relationship(back_populates="transactions")
     time= Column(DateTime, server_default=func.now())
     state = Column(SmallInteger, default=TransactionState.PENDING.value)
     expire_time = Column(DateTime, default=datetime.now() + timedelta(minutes=30))
