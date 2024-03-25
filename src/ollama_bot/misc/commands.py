@@ -7,6 +7,7 @@ commands_f: str = "\n".join((
     "/help",
     "/set_model",
     "/set_language",
+    "/subscription",
 ))
 
 commands: dict[str, set] = {

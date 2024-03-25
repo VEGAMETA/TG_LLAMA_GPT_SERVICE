@@ -1,11 +1,6 @@
 #!/bin/sh
-
-cd src
-
+cd ./src
 alembic revision --autogenerate
-
 alembic upgrade heads
-
-cd /www
-
+cd ..
 python ./src/bot.py

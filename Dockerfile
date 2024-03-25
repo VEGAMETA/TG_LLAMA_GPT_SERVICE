@@ -11,8 +11,8 @@ COPY ./config.yml .
 
 COPY ./src ./src
 
-COPY ./startup.sh .
+COPY ./run_bot.sh .
 
-RUN chmod +x ./startup.sh
+RUN chmod +x ./run_bot.sh
 
-ENTRYPOINT ["./startup.sh"]
+ENTRYPOINT ["./run_bot.sh"]

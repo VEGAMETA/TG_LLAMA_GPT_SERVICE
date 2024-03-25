@@ -1,8 +1,7 @@
 import logging
-
 from asyncio.subprocess import DEVNULL
-from container_handler.containers import ContainerHandler
 from container_handler.commands import Commands
+from container_handler.containers import ContainerHandler
 
 
 class Composer():

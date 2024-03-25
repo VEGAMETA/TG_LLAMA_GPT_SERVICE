@@ -84,9 +84,9 @@ async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession
     }
 
     port = await get_container_port(session, user.model)
-    response = ''
     not_escaped_answer = ''
     raw_message = b''
+
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60*15)) as client_session:
             from loader import config
@@ -96,19 +96,12 @@ async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession
                         if not isinstance(chunk, tuple):
                             error = language.get("error_empty")
                             await bot_message.edit_text(answer + error, parse_mode="MarkdownV2")
-                            return
-                        
                         raw_message += chunk[0]
                         if not chunk[1]:
-                            continue
-                        
+                            continue                        
                         resp_json = json.loads(raw_message.decode())
-
                         raw_message = b''
-
-                        # Getting response and formatting
-                        response = resp_json.get("response")
-                        not_escaped_answer += response
+                        not_escaped_answer += resp_json.get("response")
                         answer = await escape(not_escaped_answer)
 
                         # End of response, writing context
@@ -126,7 +119,7 @@ async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession
                             return
 
                         # Delay editing to avoid api requests excesses
-                        if time.monotonic() - bot_message_time > 3:
+                        if time.monotonic() - bot_message_time > 2:
                             await bot_message.edit_text(answer, parse_mode="MarkdownV2")
                             bot_message_time = time.monotonic()
 

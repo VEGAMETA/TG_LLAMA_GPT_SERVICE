@@ -1,10 +1,10 @@
 import asyncio
 import logging
 import functools
-import urllib.parse
+from urllib.parse import parse_qs, urlparse
+from asyncio.streams import StreamReader, StreamWriter, _DEFAULT_LIMIT
 from src.project_config import config
 from container_handler.containers import ContainerHandler
-from asyncio.streams import StreamReader, StreamWriter, _DEFAULT_LIMIT
 
 
 def with_params(*check_params):
@@ -54,11 +54,10 @@ class Server:
     async def _handle_request(self, reader: StreamReader, writer: StreamWriter) -> None:
         data = await reader.read(_DEFAULT_LIMIT)
         message = data.decode()
-        parsed = urllib.parse.urlparse(message.split('\n')[0].split(' ')[1])
-        params = {k: v[0]
-                  for k, v in urllib.parse.parse_qs(parsed.query).items()}
-
+        parsed = urlparse(message.split('\n')[0].split(' ')[1])
         function = parsed.path[1:]
+        params = {k: v[0] for k, v in parse_qs(parsed.query).items()}
+
         if callable(getattr(self, function)) and not function.startswith("_"):
             response, status_code = await getattr(self, function)(params)
         else:

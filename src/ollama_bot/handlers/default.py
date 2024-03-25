@@ -42,7 +42,6 @@ async def cancel_handler(message: Message, state: FSMContext, session: AsyncSess
     current_state = await state.get_state()
     if current_state == UserState.chatting:
         return
-
     await state.set_state(UserState.chatting)
     user = await session.get(User, message.from_user.id)
     language = await get_language(user.language)
@@ -52,11 +51,11 @@ async def cancel_handler(message: Message, state: FSMContext, session: AsyncSess
 
 @router.message(Command("help"))
 @router.message(F.text.in_(commands.get("command_help")))
-async def help_handler(message: Message) -> None:
+async def help_handler(message: Message, session: AsyncSession) -> None:
     """
     Help command handler (sends list of avalible commands).
     """
-    user = await User.get_user_by_id(message.from_user.id)
+    user = await session.get(User, message.from_user.id)
     language = await get_language(user.language)
     answer = language.get('help')
     await message.answer(answer + commands_f)

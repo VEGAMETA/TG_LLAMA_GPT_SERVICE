@@ -26,7 +26,7 @@ class Transaction(Base):
 
     id = Column(Integer, autoincrement=True)
     uuid = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
-    user_id = Column(Integer, ForeignKey('users.user_id'))
+    user_id = Column(Integer, ForeignKey('users.user_id'), index=True)
     user: Mapped["User"] = relationship(back_populates="transactions")
     time= Column(DateTime, server_default=func.now())
     state = Column(SmallInteger, default=TransactionState.PENDING.value)
