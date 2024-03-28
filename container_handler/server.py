@@ -87,7 +87,7 @@ class Server:
         ports = await ContainerHandler.get_containers()
         if not ports:
             return "No containers found", 404
-        for port in ports.split('\n'):
+        for port in ports.split('\n')[:-1]:
             asyncio.create_task(ContainerHandler.start_container(port))
         return ports, 200
 
@@ -96,7 +96,7 @@ class Server:
     async def check_container(self, port) -> tuple[str, int]:
         if not await ContainerHandler.check_container(port):
             return "Container is not running", 404
-        ContainerHandler.start_container(port)
+        await ContainerHandler.start_container(port)
         return "Container is running", 200
 
     @with_params("port", "model")

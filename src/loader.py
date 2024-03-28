@@ -3,6 +3,7 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.utils.token import TokenValidationError
+from aiogram.utils.chat_action import ChatActionMiddleware
 from aiogram.utils.callback_answer import CallbackAnswerMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
@@ -32,6 +33,7 @@ sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
 dp = Dispatcher()
 dp.update.middleware(DbSessionMiddleware(session_pool=sessionmaker))
+dp.message.middleware(ChatActionMiddleware())
 dp.callback_query.middleware(CallbackAnswerMiddleware())
 
 dp.include_routers(default.router, language.router, models.router, subscription.router, gpt.router)

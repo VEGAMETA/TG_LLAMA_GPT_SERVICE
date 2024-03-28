@@ -54,16 +54,17 @@ async def get_container_port(session: AsyncSession, model: str) -> int:
             container.operating = True
             container.last_activity_time = datetime.now()
             await session.commit()
+            await check_container(container.port)
             return container.port
         port = await get_free_port(session, model)
         if port:
             container = Container(port=port, operating=True)
             await session.merge(container)
             await session.commit()
+            await check_container(port)
             asyncio.create_task(wait_for_suspend(container.port))
             return port
-        asyncio.sleep(5)
-        session.expire_all()
+        asyncio.sleep(3)
 
 
 async def get_free_port(session: AsyncSession, model: str) -> int:
@@ -107,8 +108,15 @@ async def unoperate(session: AsyncSession, port: int):
     container = await session.get(Container, port)
     container.operating = False
 
+async def check_container(port: int) -> bool:
+    from loader import config as loader_config
+    params = {'port': port}
+    url = f'http://{loader_config.db.host}:{server_port}/check_container'
+    async with aiohttp.ClientSession() as client_session:
+        async with client_session.get(url, params=params) as response:
+            return response.status == 200
 
-async def delete_container(port):
+async def delete_container(port: int) -> bool:
     """
     Deletes container.
     """

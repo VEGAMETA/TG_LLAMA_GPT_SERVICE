@@ -1,4 +1,5 @@
 version: "3.9"
+
 services:
   python:
     container_name: python
@@ -68,3 +69,5 @@ volumes:
 networks:
   tg_bot_network:
     driver: bridge
+    name: tg_bot_network
+    external: true

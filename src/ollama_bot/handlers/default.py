@@ -13,6 +13,7 @@ from ollama_bot.keyboards.reply.default import get_default_keyboard
 
 router = Router(name="default-commands-router")
 
+
 @router.message(CommandStart())
 async def command_start_handler(message: Message, state: FSMContext, session: AsyncSession) -> None:
     """
@@ -29,7 +30,8 @@ async def command_start_handler(message: Message, state: FSMContext, session: As
         await session.merge(user)
         await session.commit()
         language = await get_language(user.language)
-        answer = language.get("greeting") + hbold(message.from_user.full_name) + language.get("start")
+        answer = language.get(
+            "greeting") + hbold(message.from_user.full_name) + language.get("start")
     await message.answer(answer, reply_markup=get_default_keyboard(language))
 
 
@@ -45,7 +47,7 @@ async def cancel_handler(message: Message, state: FSMContext, session: AsyncSess
     await state.set_state(UserState.chatting)
     user = await session.get(User, message.from_user.id)
     language = await get_language(user.language)
-    answer = language.get('canceled')
+    answer = language.get("canceled")
     await message.answer(answer, reply_markup=get_default_keyboard(language))
 
 
@@ -57,5 +59,5 @@ async def help_handler(message: Message, session: AsyncSession) -> None:
     """
     user = await session.get(User, message.from_user.id)
     language = await get_language(user.language)
-    answer = language.get('help')
+    answer = language.get("help")
     await message.answer(answer + commands_f)

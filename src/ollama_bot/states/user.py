@@ -5,3 +5,5 @@ class UserState(StatesGroup):
     chatting = State()
     choosing_model = State()
     choosing_language = State()
+    subscription = State()
+    paying = State()

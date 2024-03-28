@@ -5,11 +5,10 @@ import asyncio
 import aiohttp
 import aiogram.exceptions
 import aiohttp.client_exceptions
-from aiogram import F, Router
+from aiogram import F, Router, flags
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from project_config import models
@@ -49,6 +48,7 @@ async def clear_handler(message: Message, session: AsyncSession) -> None:
 
 
 @router.message(F.text)
+@flags.chat_action("typing")
 async def gpt_handler(message: Message, state: FSMContext, session: AsyncSession) -> None:
     """
     This handler manage ollama gpt api calls with streaming and editing message for it.

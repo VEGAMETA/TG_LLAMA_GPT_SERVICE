@@ -7,15 +7,21 @@ from container_handler.containers import ContainerHandler
 class Composer():
 
     async def start(self):
+        await self.create_network()
         await self.down()
         await self.build()
         await self.cleanup()
         await self.up()
 
+    async def create_network(self):
+        await ContainerHandler.run(*Commands.create_network, stdout=DEVNULL)
+    
     async def cleanup(self):
-        images, _ = await ContainerHandler.run(*Commands.get_dangling, stderr=DEVNULL)
-        images = images.decode().split('\n')
-        await ContainerHandler.run(*Commands.remove_images, *images)
+        images, _ = await ContainerHandler.run(*Commands.get_dangling, stdout=DEVNULL)
+        if images:
+            images = images.decode().split('\n')
+            logging.info(images)
+            await ContainerHandler.run(*Commands.remove_images, *images)
         logging.info("Cleanup completed")
 
     async def build(self):

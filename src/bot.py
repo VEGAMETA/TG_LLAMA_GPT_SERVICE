@@ -14,7 +14,7 @@ async def set_commands():
         BotCommand(command="help", description="❓"),
         BotCommand(command="set_model", description="🤖"),
         BotCommand(command="set_language", description="🌍"),
-        BotCommand(command="subcription", description="💳"),
+        BotCommand(command="subscription", description="💳"),
     ])
 
 async def main() -> None:
