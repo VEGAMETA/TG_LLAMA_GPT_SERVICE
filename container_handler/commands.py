@@ -41,12 +41,12 @@ class Commands:
 
     @staticmethod
     def run_cpu(port) -> list[str]:
-        return f"docker run -d --name ollama{port} -p {port}:11434 --network tg_bot_network -v tg_llama_gpt_service_llm-service:/root/.ollama ollama/ollama:0.1.29".split()
+        return f"docker run -d --name ollama{port} -p {port}:11434 --network tg_bot_network -v tg_llama_gpt_service_llm-service:/root/.ollama ollama/ollama:0.1.30-rc4".split()
 
     @staticmethod
     def run_nvidia(port) -> list[str]:
-        return f"docker run -d --gpus=all --name ollama{port} -p {port}:11434 --network tg_bot_network -v tg_llama_gpt_service_llm-service:/root/.ollama ollama/ollama:0.1.29".split()
+        return f"docker run -d --gpus=all --name ollama{port} -p {port}:11434 --network tg_bot_network -v tg_llama_gpt_service_llm-service:/root/.ollama ollama/ollama:0.1.30-rc4".split()
 
     @staticmethod
     def run_amd(port) -> list[str]:
-        return f"docker run -d --device /dev/kfd --device /dev/dri --name ollama{port} -p {port}:11434 --network tg_bot_network -v tg_llama_gpt_service_llm-service:/root/.ollama ollama/ollama:0.1.29-rocm".split()
+        return f"docker run -d --device /dev/kfd --device /dev/dri --name ollama{port} -p {port}:11434 --network tg_bot_network -v tg_llama_gpt_service_llm-service:/root/.ollama ollama/ollama:0.1.30-rc4-rocm".split()

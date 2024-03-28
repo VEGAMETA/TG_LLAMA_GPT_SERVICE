@@ -19,7 +19,7 @@ class ModelPuller():
         logging.info('Everything is set up and ready')
 
     async def create_puller(self) -> None:
-        container = "ollama/ollama:0.1.29"
+        container = "ollama/ollama:0.1.30-rc4"
         container += "-rocm" if config.get('GPU').casefold() == "amd" else ""
         _, error = await ContainerHandler.run(*Commands.run_puller(self.name), container, stdout=DEVNULL)
         if error and b'Pull complete' not in error:

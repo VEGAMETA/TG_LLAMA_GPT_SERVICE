@@ -36,7 +36,12 @@ Specify the desired model(s) in the `config.yml`. You can use any [availible mod
 
 ---
 
-##### If you are using Windows and just removed huge model don't forget to optimize your disc image.
+##### If you are using Windows
+Cleanup RAM with:
+```powershell
+wsl --shutdown
+```
+Optimize your disc image:
 ```powershell
 Optimize-VHD -Path "P:\path\to\your\DockerDesktop\vhdx\DockerDesktopWSL\data\ext4.vhdx"
 ```
