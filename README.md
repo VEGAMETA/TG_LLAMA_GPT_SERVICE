@@ -41,7 +41,7 @@ Cleanup RAM with:
 ```powershell
 wsl --shutdown
 ```
-Optimize your disc image:
+Optimize your VHD disk image:
 ```powershell
 Optimize-VHD -Path "P:\path\to\your\DockerDesktop\vhdx\DockerDesktopWSL\data\ext4.vhdx"
 ```
